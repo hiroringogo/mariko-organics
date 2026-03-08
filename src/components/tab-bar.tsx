@@ -6,22 +6,25 @@ import ShoppingBag from "lucide-react/dist/esm/icons/shopping-bag";
 import User from "lucide-react/dist/esm/icons/user";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/lib/i18n";
+import { t } from "@/lib/translations";
 
-const tabs = [
-  { href: "/", icon: House, label: "ホーム" },
-  { href: "/lessons", icon: Calendar, label: "予約" },
-  { href: "/shop", icon: ShoppingBag, label: "物販" },
-  { href: "/mypage", icon: User, label: "マイページ" },
-];
+const tabKeys = [
+  { href: "/", icon: House, ja: "ホーム", en: "Home" },
+  { href: "/lessons", icon: Calendar, ja: "予約", en: "Book" },
+  { href: "/shop", icon: ShoppingBag, ja: "物販", en: "Shop" },
+  { href: "/mypage", icon: User, ja: "マイページ", en: "My Page" },
+] as const;
 
 export function TabBar() {
   const pathname = usePathname();
+  const { lang } = useLanguage();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around items-start pt-3 pb-4 z-50"
       style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
     >
-      {tabs.map((tab) => {
+      {tabKeys.map((tab) => {
         const isActive = pathname === tab.href;
         return (
           <Link
@@ -41,7 +44,7 @@ export function TabBar() {
                   : "text-muted-foreground font-medium"
               }`}
             >
-              {tab.label}
+              {tab[lang]}
             </span>
           </Link>
         );

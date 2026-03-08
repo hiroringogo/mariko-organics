@@ -40,7 +40,7 @@ export function LessonForm({ initial, onSubmit, onCancel, submitLabel }: LessonF
   const [endTime, setEndTime] = useState(initial?.end_time?.slice(0, 5) ?? "13:00");
   const [totalSeats, setTotalSeats] = useState(initial?.total_seats ?? 6);
   const [minSeats, setMinSeats] = useState(initial?.min_seats ?? 4);
-  const [price, setPrice] = useState(initial?.price ?? 45);
+  const [price, setPrice] = useState(initial?.price ?? 52);
   const [workshopTitle, setWorkshopTitle] = useState(initial?.workshop_title ?? "Gluten Free Workshop");
   const [workshopSubtitle, setWorkshopSubtitle] = useState(initial?.workshop_subtitle ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");

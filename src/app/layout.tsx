@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/i18n";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -26,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${outfit.variable} font-sans antialiased`}>
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

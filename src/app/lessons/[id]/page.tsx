@@ -13,7 +13,11 @@ import ChefHat from "lucide-react/dist/esm/icons/chef-hat";
 import UtensilsCrossed from "lucide-react/dist/esm/icons/utensils-crossed";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/lib/i18n";
+import { t, formatDateFull } from "@/lib/translations";
+import { LanguageToggle } from "@/components/language-toggle";
 
 interface Lesson {
   id: string;
@@ -30,26 +34,10 @@ interface Lesson {
   seats_remaining: number;
 }
 
-const lessonContents = [
-  {
-    icon: ChefHat,
-    title: "生米のサクサクサブレ作り",
-    subtitle: "みんなで一緒に完成させていきましょう！",
-    bg: "bg-[#C8F0D8]",
-    iconColor: "text-primary",
-  },
-  {
-    icon: UtensilsCrossed,
-    title: "お楽しみランチ",
-    subtitle: "季節のテーマに合わせた特別メニュー",
-    bg: "bg-[#FFF3E0]",
-    iconColor: "text-[#D4A64A]",
-  },
-];
-
 export default function LessonDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { lang } = useLanguage();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [selectedLessonId, setSelectedLessonId] = useState<string>("");
@@ -59,12 +47,9 @@ export default function LessonDetailPage() {
   const [phone, setPhone] = useState("");
   const [companions, setCompanions] = useState(["", ""]);
   const [notes, setNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
-      // 選択されたレッスン
       const { data: lessonData } = await supabase
         .from("lesson_with_seats")
         .select("*")
@@ -76,7 +61,6 @@ export default function LessonDetailPage() {
         setSelectedLessonId(lessonData.id);
       }
 
-      // 同じ月のレッスン一覧（日程選択用）
       const { data: allData } = await supabase
         .from("lesson_with_seats")
         .select("*")
@@ -87,6 +71,15 @@ export default function LessonDetailPage() {
     }
     fetchData();
   }, [params.id]);
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("mariko_name");
+    const savedEmail = localStorage.getItem("mariko_email");
+    const savedPhone = localStorage.getItem("mariko_phone");
+    if (savedName) setName(savedName);
+    if (savedEmail) setEmail(savedEmail);
+    if (savedPhone) setPhone(savedPhone);
+  }, []);
 
   if (!lesson) {
     return (
@@ -99,89 +92,83 @@ export default function LessonDetailPage() {
   const selectedLesson = allLessons.find((l) => l.id === selectedLessonId) || lesson;
   const maxParticipants = Math.min(selectedLesson.seats_remaining, 3);
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!name || !email) return;
-    setSubmitting(true);
 
-    const { error } = await supabase.from("bookings").insert({
-      lesson_id: selectedLessonId,
+    // Save booking data to sessionStorage for the confirmation page
+    const bookingData = {
+      lessonId: selectedLessonId,
       name,
       email,
       phone: phone || null,
-      participant_count: participantCount,
-      companion_names: participantCount > 1
+      participantCount,
+      companions: participantCount > 1
         ? companions.slice(0, participantCount - 1).filter(Boolean)
-        : null,
+        : [],
       notes: notes || null,
-    });
+      lessonDate: selectedLesson.date,
+      lessonStartTime: selectedLesson.start_time,
+      lessonEndTime: selectedLesson.end_time,
+      lessonTitle: selectedLesson.workshop_subtitle,
+      lessonPrice: selectedLesson.price,
+      totalSeats: selectedLesson.total_seats,
+      minSeats: selectedLesson.min_seats,
+    };
 
-    if (!error) {
-      // Send confirmation email
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "lesson_booking",
-          name,
-          email,
-          lessonTitle: selectedLesson.workshop_subtitle,
-          lessonDate: formatDate(selectedLesson.date),
-          lessonTime: `${selectedLesson.start_time.slice(0, 5)} AM - ${selectedLesson.end_time.slice(0, 5)} PM`,
-          participantCount,
-          companionNames: participantCount > 1
-            ? companions.slice(0, participantCount - 1).filter(Boolean)
-            : [],
-        }),
-      }).catch(() => {});
-      setSubmitted(true);
-    }
-    setSubmitting(false);
+    sessionStorage.setItem(`booking_${selectedLessonId}`, JSON.stringify(bookingData));
+
+    localStorage.setItem("mariko_name", name);
+    localStorage.setItem("mariko_email", email);
+    if (phone) localStorage.setItem("mariko_phone", phone);
+
+    router.push(`/lessons/${selectedLessonId}/confirm`);
   }
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr + "T00:00:00");
-    const days = ["日", "月", "火", "水", "木", "金", "土"];
-    return `${d.getMonth() + 1}月${d.getDate()}日（${days[d.getDay()]}）`;
-  };
+  const lessonContents = [
+    {
+      icon: ChefHat,
+      title: t.content1Title[lang],
+      subtitle: t.content1Sub[lang],
+      bg: "bg-[#C8F0D8]",
+      iconColor: "text-primary",
+    },
+    {
+      icon: UtensilsCrossed,
+      title: t.content2Title[lang],
+      subtitle: t.content2Sub[lang],
+      bg: "bg-[#FFF3E0]",
+      iconColor: "text-[#D4A64A]",
+    },
+  ];
 
-  if (submitted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background px-6 gap-4">
-        <div className="w-16 h-16 rounded-full bg-[#C8F0D8] flex items-center justify-center">
-          <ChefHat size={32} className="text-primary" />
-        </div>
-        <h1 className="text-xl font-bold">予約が完了しました！</h1>
-        <p className="text-sm text-muted-foreground text-center">
-          確認メールを {email} にお送りしました。<br />
-          3日前に開催確定のご連絡をいたします。
-        </p>
-        <Link
-          href="/"
-          className="mt-4 h-12 px-8 rounded-full bg-primary text-primary-foreground font-semibold flex items-center"
-        >
-          ホームに戻る
-        </Link>
-      </div>
-    );
-  }
+  const capacityText = lang === "ja"
+    ? `定員 ${lesson.total_seats}名（最少催行人数 ${lesson.min_seats}名）`
+    : `Max ${lesson.total_seats} guests (min. ${lesson.min_seats} to hold class)`;
+
+  const bookButtonText = lang === "ja"
+    ? `${participantCount}名で予約する`
+    : `Book for ${participantCount} Guest${participantCount > 1 ? "s" : ""}`;
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Nav Bar */}
-      <header className="flex items-center gap-3 px-6 h-14">
-        <Link href="/">
-          <ChevronLeft size={24} className="text-foreground" />
-        </Link>
-        <span className="text-lg font-semibold tracking-tight">
-          レッスン詳細
-        </span>
+      <header className="flex items-center justify-between px-6 h-14">
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <ChevronLeft size={24} className="text-foreground" />
+          </Link>
+          <span className="text-lg font-semibold tracking-tight">
+            {t.lessonDetail[lang]}
+          </span>
+        </div>
+        <LanguageToggle />
       </header>
 
       {/* Hero Image */}
       <div className="h-[220px] bg-muted overflow-hidden relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero.jpg"
+          src="/images/hero.jpg?v=2"
           alt={lesson.workshop_subtitle}
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -196,7 +183,7 @@ export default function LessonDetailPage() {
             {lesson.workshop_title}
           </span>
           <h1 className="text-[26px] font-bold tracking-tight">
-            {lesson.workshop_subtitle}
+            {t.lessonTitle[lang]}
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {lesson.description}
@@ -205,7 +192,7 @@ export default function LessonDetailPage() {
 
         {/* Lesson Contents */}
         <div className="flex flex-col gap-3.5">
-          <h2 className="text-base font-semibold">レッスン内容</h2>
+          <h2 className="text-base font-semibold">{t.lessonContentsTitle[lang]}</h2>
           {lessonContents.map((item, i) => (
             <div key={i} className="flex items-center gap-3">
               <div className={`${item.bg} w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0`}>
@@ -225,19 +212,19 @@ export default function LessonDetailPage() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <Clock size={18} className="text-primary" />
-            <span className="text-sm">{lesson.start_time.slice(0, 5)} AM - {lesson.end_time.slice(0, 5)} PM（約3時間）</span>
+            <span className="text-sm">{lesson.start_time.slice(0, 5)} AM - {lesson.end_time.slice(0, 5)} PM {t.approxHours[lang]}</span>
           </div>
           <div className="flex items-center gap-3">
             <MapPin size={18} className="text-primary" />
-            <span className="text-sm">Orange County, CA（詳細は予約後にご案内）</span>
+            <span className="text-sm">{t.locationDetail[lang]}</span>
           </div>
           <div className="flex items-center gap-3">
             <Users size={18} className="text-primary" />
-            <span className="text-sm">定員 {lesson.total_seats}名（最少催行人数 {lesson.min_seats}名）</span>
+            <span className="text-sm">{capacityText}</span>
           </div>
           <div className="flex items-center gap-3">
             <DollarSign size={18} className="text-primary" />
-            <span className="text-sm font-medium">${lesson.price} / レッスン</span>
+            <span className="text-sm font-medium">${lesson.price} {t.perLesson[lang]}</span>
           </div>
         </div>
 
@@ -245,11 +232,14 @@ export default function LessonDetailPage() {
 
         {/* Date Selection */}
         <div className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">日程を選択</h2>
+          <h2 className="text-base font-semibold">{t.selectDate[lang]}</h2>
           <div className="flex flex-col gap-2">
             {allLessons.map((l) => {
               const isSelected = selectedLessonId === l.id;
               const isFull = l.seats_remaining <= 0;
+              const seatsText = lang === "ja"
+                ? (isFull ? "満席" : `残り${l.seats_remaining}席`)
+                : (isFull ? "Full" : `${l.seats_remaining} left`);
               return (
                 <button
                   key={l.id}
@@ -265,7 +255,7 @@ export default function LessonDetailPage() {
                 >
                   <div className="flex flex-col gap-0.5">
                     <span className={`text-sm font-semibold ${isFull ? "text-muted-foreground" : ""}`}>
-                      {formatDate(l.date)}
+                      {formatDateFull(l.date, lang)}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {l.start_time.slice(0, 5)} AM
@@ -274,7 +264,7 @@ export default function LessonDetailPage() {
                   <span className={`text-xs font-medium ${
                     isFull ? "text-destructive" : l.seats_remaining <= 2 ? "text-terracotta" : "text-muted-foreground"
                   }`}>
-                    {isFull ? "満席" : `残り${l.seats_remaining}席`}
+                    {seatsText}
                   </span>
                 </button>
               );
@@ -286,42 +276,42 @@ export default function LessonDetailPage() {
 
         {/* Booking Form */}
         <div className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">お客様情報</h2>
+          <h2 className="text-base font-semibold">{t.customerInfo[lang]}</h2>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">お名前 <span className="text-destructive">*</span></label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="田中 花子"
+            <label className="text-sm font-medium">{t.nameLabel[lang]} <span className="text-destructive">*</span></label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder[lang]}
               className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">メールアドレス <span className="text-destructive">*</span></label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hanako@example.com"
+            <label className="text-sm font-medium">{t.emailLabel[lang]} <span className="text-destructive">*</span></label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder[lang]}
               className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">電話番号</label>
-              <span className="text-xs text-muted-foreground">任意</span>
+              <label className="text-sm font-medium">{t.phoneLabel[lang]}</label>
+              <span className="text-xs text-muted-foreground">{t.optional[lang]}</span>
             </div>
             <div className="flex items-center gap-2 h-10 rounded-full bg-accent px-4 border border-input">
               <span className="text-sm text-muted-foreground">+1</span>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 123-4567"
                 className="flex-1 bg-transparent text-sm outline-none" />
             </div>
-            <span className="text-[11px] text-muted-foreground">SMSでリマインダーをお送りします</span>
+            <span className="text-[11px] text-muted-foreground">{t.phoneHint[lang]}</span>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">参加人数</label>
+            <label className="text-sm font-medium">{t.participantCount[lang]}</label>
             <div className="flex gap-2">
               {Array.from({ length: maxParticipants }, (_, i) => i + 1).map((n) => (
                 <button key={n} onClick={() => { setParticipantCount(n); if (n === 1) setCompanions(["", ""]); }}
                   className={`h-10 w-14 rounded-full text-sm font-medium transition-colors ${
                     participantCount === n ? "bg-primary text-primary-foreground" : "bg-accent border border-input text-foreground"
                   }`}>
-                  {n}名
+                  {lang === "ja" ? `${n}名` : n}
                 </button>
               ))}
             </div>
@@ -331,20 +321,20 @@ export default function LessonDetailPage() {
             <div className="flex flex-col gap-2.5 bg-secondary/50 border border-border rounded-xl p-4">
               <div className="flex items-center gap-2">
                 <UserPlus size={14} className="text-muted-foreground" />
-                <span className="text-sm font-medium">同伴者のお名前</span>
+                <span className="text-sm font-medium">{t.companionNames[lang]}</span>
               </div>
               {Array.from({ length: participantCount - 1 }, (_, i) => i).map((i) => (
                 <input key={i} type="text" value={companions[i]}
                   onChange={(e) => { const next = [...companions]; next[i] = e.target.value; setCompanions(next); }}
-                  placeholder={`${i + 1}人目のお名前`}
+                  placeholder={lang === "ja" ? `${i + 1}人目のお名前` : `Companion ${i + 1} name`}
                   className="h-10 rounded-full bg-card px-3.5 text-sm border border-input outline-none focus:border-primary transition-colors" />
               ))}
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">備考（アレルギーなど）</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="ご自由にご記入ください" rows={3}
+            <label className="text-sm font-medium">{t.notesLabel[lang]}</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.notesPlaceholder[lang]} rows={3}
               className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none" />
           </div>
         </div>
@@ -353,15 +343,32 @@ export default function LessonDetailPage() {
         <div className="flex flex-col gap-2 py-1">
           <button
             onClick={handleSubmit}
-            disabled={!name || !email || submitting}
+            disabled={!name || !email}
             className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {submitting && <Loader2 size={18} className="animate-spin" />}
-            {participantCount}名で予約する
+            {bookButtonText}
           </button>
           <p className="text-xs text-muted-foreground text-center">
-            ※ 会員登録不要で予約できます
+            {t.noRegistration[lang]}
           </p>
+        </div>
+
+        {/* Cancellation Policy */}
+        <div className="bg-card rounded-[16px] p-4 flex flex-col gap-2.5 border border-border">
+          <div className="flex items-center gap-2">
+            <CreditCard size={16} className="text-muted-foreground" />
+            <h3 className="text-sm font-semibold">{t.cancellationTitle[lang]}</h3>
+          </div>
+          <ul className="flex flex-col gap-1.5">
+            <li className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+              <span className="shrink-0">・</span>
+              <span>{t.cancellationBullet1[lang]}</span>
+            </li>
+            <li className="text-xs text-muted-foreground leading-relaxed flex gap-2">
+              <span className="shrink-0">・</span>
+              <span>{t.cancellationBullet2[lang]}</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

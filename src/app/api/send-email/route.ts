@@ -9,8 +9,9 @@ export async function POST(req: NextRequest) {
 
   try {
     if (type === "lesson_booking") {
-      const { name, email, lessonTitle, lessonDate, lessonTime, participantCount, companionNames } = body;
+      const { name, email, lessonTitle, lessonDate, lessonTime, participantCount, companionNames, lessonPrice } = body;
 
+      const price = lessonPrice || 52;
       const companions = companionNames?.length
         ? `\n同伴者: ${companionNames.join("、")}`
         : "";
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 🕐 時間: ${lessonTime}
 📍 場所: Orange County, CA（詳細は開催確定後にご案内します）
 👥 参加人数: ${participantCount}名${companions}
-💰 料金: $45 × ${participantCount}名 = $${45 * participantCount}
+💰 料金: $${price} × ${participantCount}名 = $${price * participantCount}
 ━━━━━━━━━━━━━━━━━━
 
 【開催確定について】
@@ -36,7 +37,8 @@ export async function POST(req: NextRequest) {
 3日前までに開催確定のご連絡をメールでお送りします。
 
 【キャンセルについて】
-キャンセルをご希望の場合は、レッスン3日前までにご連絡ください。
+やむを得ずにお越しいただけない場合は、同月または翌月のレッスンのお振替が可能です。
+お振替が難しい場合、手数料$5/人を除いた金額をお支払いいただいたクレジットカードにご返金します。
 
 ご質問がありましたら、お気軽にご連絡ください。
 楽しみにお待ちしております！

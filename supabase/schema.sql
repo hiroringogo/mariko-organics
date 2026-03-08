@@ -8,7 +8,7 @@ create table lessons (
   end_time time not null,
   total_seats int not null default 8,
   min_seats int not null default 4,
-  price numeric not null default 45,
+  price numeric not null default 52,
   image_url text,
   workshop_title text,
   workshop_subtitle text,
@@ -48,7 +48,18 @@ create policy "Anyone can create bookings" on bookings for insert with check (tr
 create policy "Users can view own bookings by email" on bookings for select using (true);
 
 -- サンプルデータ
-insert into lessons (title, date, start_time, end_time, workshop_title, workshop_subtitle, description) values
-  ('水曜クラス', '2026-03-05', '10:00', '13:00', 'Gluten Free Workshop', '生米のサクサクサブレ', '毎月テーマが変わるグルテンフリーワークショップ。今月は生米を使ったサクサク食感のサブレをみんなで作ります。レッスン後はランチ付き！'),
-  ('土曜クラス', '2026-03-08', '10:00', '13:00', 'Gluten Free Workshop', '生米のサクサクサブレ', '毎月テーマが変わるグルテンフリーワークショップ。今月は生米を使ったサクサク食感のサブレをみんなで作ります。レッスン後はランチ付き！'),
-  ('水曜クラス', '2026-03-12', '10:00', '13:00', 'Gluten Free Workshop', '生米のサクサクサブレ', '毎月テーマが変わるグルテンフリーワークショップ。今月は生米を使ったサクサク食感のサブレをみんなで作ります。レッスン後はランチ付き！');
+insert into lessons (title, date, start_time, end_time, total_seats, min_seats, price, workshop_title, workshop_subtitle, description) values
+  ('火曜クラス', '2026-03-10', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('水曜クラス', '2026-03-11', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('金曜クラス', '2026-03-13', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('土曜クラス', '2026-03-14', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('月曜クラス', '2026-03-16', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('火曜クラス', '2026-03-17', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('木曜クラス', '2026-03-19', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('金曜クラス', '2026-03-20', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('月曜クラス', '2026-03-23', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('火曜クラス', '2026-03-24', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。'),
+  ('水曜クラス', '2026-03-25', '10:00', '13:00', 6, 4, 52, 'Gluten Free Workshop', 'Namagome Pão de Ló', 'ポルトガルをテーマに、本場のお菓子パン・ド・ローを作ります。カステラのルーツと言われるふわふわのスポンジケーキを、生米から。ランチにはポルトガル風リゾット付き。');
+
+-- マイページからのキャンセル用（status更新を許可）
+create policy "Anyone can update booking status" on bookings for update using (true) with check (true);

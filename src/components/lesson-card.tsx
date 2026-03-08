@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import Users from "lucide-react/dist/esm/icons/users";
+import { useLanguage } from "@/lib/i18n";
 
 interface LessonCardProps {
   id: string;
   month: string;
   day: string;
+  dayOfWeek?: string;
   title: string;
+  subtitle?: string;
   time: string;
   seatsRemaining: number;
   totalSeats: number;
@@ -16,14 +21,21 @@ export function LessonCard({
   id,
   month,
   day,
+  dayOfWeek,
   title,
+  subtitle,
   time,
   seatsRemaining,
   totalSeats,
   colorVariant = "primary",
 }: LessonCardProps) {
+  const { lang } = useLanguage();
   const bgColor = colorVariant === "primary" ? "bg-primary" : "bg-terracotta";
   const currentBookings = totalSeats - seatsRemaining;
+
+  const seatText = lang === "ja"
+    ? `現在${currentBookings}名 / あと${seatsRemaining}名で開催`
+    : `${currentBookings} booked / ${seatsRemaining} more needed`;
 
   return (
     <Link href={`/lessons/${id}`}>
@@ -37,16 +49,24 @@ export function LessonCard({
           <span className="text-[22px] font-bold leading-none text-primary-foreground tracking-tight">
             {day}
           </span>
+          {dayOfWeek && (
+            <span className="text-[10px] font-medium text-primary-foreground/80">
+              ({dayOfWeek})
+            </span>
+          )}
         </div>
         <div className="flex flex-col gap-1 min-w-0">
           <span className="text-[15px] font-semibold text-foreground">
             {title}
           </span>
+          {subtitle && (
+            <span className="text-[12px] text-muted-foreground/70">{subtitle}</span>
+          )}
           <span className="text-[13px] text-muted-foreground">{time}</span>
           <div className="flex items-center gap-1.5">
             <Users size={13} className="text-muted-foreground" />
             <span className="text-[12px] text-muted-foreground">
-              現在{currentBookings}名 / あと{seatsRemaining}名で開催
+              {seatText}
             </span>
           </div>
         </div>

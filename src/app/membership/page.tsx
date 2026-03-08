@@ -1,62 +1,64 @@
+"use client";
+
 import Link from "next/link";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import CalendarCheck from "lucide-react/dist/esm/icons/calendar-check";
 import BookOpen from "lucide-react/dist/esm/icons/book-open";
 import ShoppingBag from "lucide-react/dist/esm/icons/shopping-bag";
-import Users from "lucide-react/dist/esm/icons/users";
 import Star from "lucide-react/dist/esm/icons/star";
-
-const benefits = [
-  {
-    icon: CalendarCheck,
-    title: "先行予約・日程リクエスト",
-    description: "一般公開前にレッスンの予約が可能",
-  },
-  {
-    icon: Star,
-    title: "メンバー限定クラス",
-    description: "特別なテーマのプライベートレッスン",
-  },
-  {
-    icon: ShoppingBag,
-    title: "物販の先行予約・限定販売",
-    description: "米粉やオリジナル商品の優先購入",
-  },
-  {
-    icon: BookOpen,
-    title: "過去レシピのオンライン閲覧",
-    description: "これまでのレッスンレシピをいつでも確認",
-  },
-  {
-    icon: Users,
-    title: "メンバー以外の方も代表予約",
-    description: "お友達の分もまとめて予約OK",
-  },
-];
+import { useLanguage } from "@/lib/i18n";
+import { t } from "@/lib/translations";
+import { LanguageToggle } from "@/components/language-toggle";
 
 export default function MembershipPage() {
+  const { lang } = useLanguage();
+
+  const benefits = [
+    {
+      icon: CalendarCheck,
+      title: t.benefit1Title[lang],
+      description: t.benefit1Desc[lang],
+    },
+    {
+      icon: Star,
+      title: t.benefit2Title[lang],
+      description: t.benefit2Desc[lang],
+    },
+    {
+      icon: ShoppingBag,
+      title: t.benefit3Title[lang],
+      description: t.benefit3Desc[lang],
+    },
+    {
+      icon: BookOpen,
+      title: t.benefit4Title[lang],
+      description: t.benefit4Desc[lang],
+    },
+  ];
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Nav Bar */}
-      <header className="flex items-center gap-3 px-6 h-14">
-        <Link href="/">
-          <ChevronLeft size={24} className="text-foreground" />
-        </Link>
-        <span className="text-lg font-semibold tracking-tight">
-          メンバーシップ
-        </span>
+      <header className="flex items-center justify-between px-6 h-14">
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <ChevronLeft size={24} className="text-foreground" />
+          </Link>
+          <span className="text-lg font-semibold tracking-tight">
+            {t.membership[lang]}
+          </span>
+        </div>
+        <LanguageToggle />
       </header>
 
       <div className="flex flex-col gap-6 p-6">
         {/* Title Section */}
         <div className="flex flex-col gap-2 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Mariko Organics
-            <br />
-            メンバーシップ
+          <h1 className="text-2xl font-bold tracking-tight whitespace-pre-line">
+            {t.memberTitle[lang]}
           </h1>
           <p className="text-sm text-muted-foreground">
-            年会費 $40 で特典いっぱい
+            {t.memberFee[lang]}
           </p>
         </div>
 
@@ -83,10 +85,10 @@ export default function MembershipPage() {
         {/* CTA */}
         <div className="flex flex-col gap-2 pt-2">
           <button className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold">
-            メンバーシップに申し込む
+            {t.memberCTA[lang]}
           </button>
           <p className="text-xs text-muted-foreground text-center">
-            年会費 $40（税込）
+            {t.memberFeeNote[lang]}
           </p>
         </div>
       </div>
