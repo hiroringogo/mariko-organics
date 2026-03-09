@@ -17,6 +17,7 @@ import Download from "lucide-react/dist/esm/icons/download";
 import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
 import Lock from "lucide-react/dist/esm/icons/lock";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
 import { supabase } from "@/lib/supabase";
 import { LessonForm } from "@/components/lesson-form";
 
@@ -79,6 +80,10 @@ export default function AdminPage() {
   const [formMode, setFormMode] = useState<FormMode>({ type: "closed" });
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmCancel, setConfirmCancel] = useState<Booking & { lessonDate: string } | null>(null);
+  const [members, setMembers] = useState<{ id: string; email: string; name: string | null; created_at: string }[]>([]);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberName, setNewMemberName] = useState("");
+  const [memberError, setMemberError] = useState("");
 
   // Month filter
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -136,7 +141,36 @@ export default function AdminPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { if (authed) fetchData(); }, [authed, fetchData]);
+  const fetchMembers = useCallback(async () => {
+    const { data } = await supabase
+      .from("members")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setMembers(data ?? []);
+  }, []);
+
+  async function handleAddMember() {
+    setMemberError("");
+    if (!newMemberEmail) return;
+    const { error } = await supabase.from("members").insert({
+      email: newMemberEmail.trim().toLowerCase(),
+      name: newMemberName.trim() || null,
+    });
+    if (error) {
+      setMemberError(error.code === "23505" ? "このメールは既に登録済みです" : "エラーが発生しました");
+      return;
+    }
+    setNewMemberEmail("");
+    setNewMemberName("");
+    await fetchMembers();
+  }
+
+  async function handleRemoveMember(id: string) {
+    await supabase.from("members").delete().eq("id", id);
+    await fetchMembers();
+  }
+
+  useEffect(() => { if (authed) { fetchData(); fetchMembers(); } }, [authed, fetchData, fetchMembers]);
 
   // Filter lessons by selected month
   const lessons = useMemo(() =>
@@ -596,6 +630,74 @@ export default function AdminPage() {
               <Download size={14} />
               全データをダウンロード
             </button>
+          </div>
+
+          {/* Member Management Section */}
+          <div className="flex flex-col gap-3 pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-base font-semibold">会員管理</span>
+              <div className="flex items-center gap-1.5">
+                <UserCheck size={16} className="text-primary" />
+                <span className="text-xs font-medium text-primary">{members.length}名</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              会員のメールアドレスを登録すると、会員先行公開レッスンが表示されます。
+            </p>
+
+            {/* Add Member Form */}
+            <div className="flex flex-col gap-2 bg-card rounded-xl p-3 border border-border">
+              <input
+                type="text"
+                value={newMemberName}
+                onChange={(e) => setNewMemberName(e.target.value)}
+                placeholder="名前（任意）"
+                className="h-9 rounded-lg bg-accent px-3 text-sm border border-input outline-none focus:border-primary transition-colors"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={newMemberEmail}
+                  onChange={(e) => setNewMemberEmail(e.target.value)}
+                  placeholder="メールアドレス"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddMember()}
+                  className="flex-1 h-9 rounded-lg bg-accent px-3 text-sm border border-input outline-none focus:border-primary transition-colors"
+                />
+                <button
+                  onClick={handleAddMember}
+                  disabled={!newMemberEmail}
+                  className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+                >
+                  追加
+                </button>
+              </div>
+              {memberError && <p className="text-xs text-destructive">{memberError}</p>}
+            </div>
+
+            {/* Member List */}
+            {members.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {members.map((member) => (
+                  <div key={member.id} className="flex items-center gap-3 bg-card rounded-xl p-3 border border-border">
+                    <div className="w-8 h-8 rounded-full bg-[#E8D5F5] flex items-center justify-center shrink-0">
+                      <span className="text-xs font-semibold text-[#7B5EA7]">
+                        {(member.name || member.email).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {member.name && <p className="text-sm font-medium truncate">{member.name}</p>}
+                      <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveMember(member.id)}
+                      className="text-xs text-destructive shrink-0"
+                    >
+                      <XCircle size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

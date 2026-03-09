@@ -26,16 +26,35 @@ export default function LessonsPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("lesson_with_seats")
-      .select("*")
-      .eq("is_published", true)
-      .gte("date", new Date().toISOString().split("T")[0])
-      .order("date", { ascending: true })
-      .then(({ data }) => {
-        setLessons(data ?? []);
-        setLoaded(true);
-      });
+    async function load() {
+      const savedEmail = localStorage.getItem("mariko_email");
+      let isMember = false;
+      if (savedEmail) {
+        const { data: member } = await supabase
+          .from("members")
+          .select("id")
+          .eq("email", savedEmail)
+          .maybeSingle();
+        isMember = !!member;
+      }
+
+      const query = supabase
+        .from("lesson_with_seats")
+        .select("*")
+        .gte("date", new Date().toISOString().split("T")[0])
+        .order("date", { ascending: true });
+
+      if (isMember) {
+        query.or("is_published.eq.true,is_member_published.eq.true");
+      } else {
+        query.eq("is_published", true);
+      }
+
+      const { data } = await query;
+      setLessons(data ?? []);
+      setLoaded(true);
+    }
+    load();
   }, []);
 
   return (

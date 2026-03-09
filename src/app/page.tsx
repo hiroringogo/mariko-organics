@@ -19,21 +19,48 @@ interface Lesson {
   end_time: string;
   total_seats: number;
   seats_remaining: number;
+  is_published: boolean;
+  is_member_published: boolean;
 }
 
 export default function Home() {
   const { lang } = useLanguage();
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("lesson_with_seats")
-      .select("*")
-      .eq("is_published", true)
-      .gte("date", new Date().toISOString().split("T")[0])
-      .order("date", { ascending: true })
-      .limit(3)
-      .then(({ data }) => setLessons(data ?? []));
+    async function load() {
+      // Check membership
+      const savedEmail = localStorage.getItem("mariko_email");
+      let memberFlag = false;
+      if (savedEmail) {
+        const { data: member } = await supabase
+          .from("members")
+          .select("id")
+          .eq("email", savedEmail)
+          .maybeSingle();
+        memberFlag = !!member;
+        setIsMember(memberFlag);
+      }
+
+      // Fetch lessons: published OR (member-published if member)
+      const query = supabase
+        .from("lesson_with_seats")
+        .select("*")
+        .gte("date", new Date().toISOString().split("T")[0])
+        .order("date", { ascending: true })
+        .limit(3);
+
+      if (memberFlag) {
+        query.or("is_published.eq.true,is_member_published.eq.true");
+      } else {
+        query.eq("is_published", true);
+      }
+
+      const { data } = await query;
+      setLessons(data ?? []);
+    }
+    load();
   }, []);
 
   return (

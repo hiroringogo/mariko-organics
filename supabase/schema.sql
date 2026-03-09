@@ -66,3 +66,16 @@ insert into lessons (title, date, start_time, end_time, total_seats, min_seats, 
 
 -- マイページからのキャンセル用（status更新を許可）
 create policy "Anyone can update booking status" on bookings for update using (true) with check (true);
+
+-- 会員テーブル（メールアドレスで会員判定）
+create table members (
+  id uuid primary key default gen_random_uuid(),
+  email text not null unique,
+  name text,
+  created_at timestamptz default now()
+);
+
+alter table members enable row level security;
+create policy "Anyone can check membership" on members for select using (true);
+create policy "Anyone can manage members" on members for insert with check (true);
+create policy "Anyone can delete members" on members for delete using (true);
