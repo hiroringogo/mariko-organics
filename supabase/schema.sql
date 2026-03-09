@@ -12,6 +12,8 @@ create table lessons (
   image_url text,
   workshop_title text,
   workshop_subtitle text,
+  is_published boolean not null default false,
+  is_member_published boolean not null default false,
   created_at timestamptz default now()
 );
 
@@ -26,6 +28,7 @@ create table bookings (
   companion_names text[],
   notes text,
   status text not null default 'confirmed' check (status in ('confirmed', 'cancelled')),
+  payment_status text not null default 'unpaid' check (payment_status in ('unpaid', 'paid', 'refunded')),
   created_at timestamptz default now()
 );
 

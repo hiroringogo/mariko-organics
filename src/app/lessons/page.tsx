@@ -29,6 +29,7 @@ export default function LessonsPage() {
     supabase
       .from("lesson_with_seats")
       .select("*")
+      .eq("is_published", true)
       .gte("date", new Date().toISOString().split("T")[0])
       .order("date", { ascending: true })
       .then(({ data }) => {

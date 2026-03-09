@@ -21,7 +21,7 @@ export function TabBar() {
   const { lang } = useLanguage();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex justify-around items-start pt-3 pb-4 z-50"
+    <nav className="fixed bottom-0 left-0 right-0 mx-auto max-w-lg bg-card border-t border-border flex justify-around items-start pt-3 pb-4 z-50"
       style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
     >
       {tabKeys.map((tab) => {

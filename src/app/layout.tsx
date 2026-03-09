@@ -27,7 +27,11 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className={`${outfit.variable} font-sans antialiased`}>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <div className="mx-auto w-full max-w-lg min-h-screen bg-background shadow-none sm:shadow-xl">
+            {children}
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );

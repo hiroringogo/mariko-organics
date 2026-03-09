@@ -64,6 +64,7 @@ export default function LessonDetailPage() {
       const { data: allData } = await supabase
         .from("lesson_with_seats")
         .select("*")
+        .eq("is_published", true)
         .gte("date", new Date().toISOString().split("T")[0])
         .order("date", { ascending: true });
 
