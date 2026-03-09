@@ -34,13 +34,17 @@ export default function Home() {
       const savedEmail = localStorage.getItem("mariko_email");
       let memberFlag = false;
       if (savedEmail) {
-        const { data: member } = await supabase
-          .from("members")
-          .select("id")
-          .eq("email", savedEmail)
-          .maybeSingle();
-        memberFlag = !!member;
-        setIsMember(memberFlag);
+        try {
+          const { data: member } = await supabase
+            .from("members")
+            .select("id")
+            .eq("email", savedEmail)
+            .maybeSingle();
+          memberFlag = !!member;
+          setIsMember(memberFlag);
+        } catch {
+          // members table may not exist yet
+        }
       }
 
       // Fetch lessons: published OR (member-published if member)

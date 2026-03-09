@@ -65,12 +65,16 @@ export default function LessonDetailPage() {
       const savedEmail = localStorage.getItem("mariko_email");
       let isMember = false;
       if (savedEmail) {
-        const { data: member } = await supabase
-          .from("members")
-          .select("id")
-          .eq("email", savedEmail)
-          .maybeSingle();
-        isMember = !!member;
+        try {
+          const { data: member } = await supabase
+            .from("members")
+            .select("id")
+            .eq("email", savedEmail)
+            .maybeSingle();
+          isMember = !!member;
+        } catch {
+          // members table may not exist yet
+        }
       }
 
       const query = supabase
