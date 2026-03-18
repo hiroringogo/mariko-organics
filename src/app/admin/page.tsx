@@ -108,6 +108,7 @@ export default function AdminPage() {
   const [membersOpen, setMembersOpen] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [pendingMemberCount, setPendingMemberCount] = useState(0);
   const [emailOpen, setEmailOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -199,6 +200,7 @@ export default function AdminPage() {
     if (res.ok) {
       const data = await res.json();
       setMembers(data);
+      setPendingMemberCount(data.filter((m: Member) => m.status === "pending").length);
     }
     setMembersLoading(false);
   }, []);
@@ -886,7 +888,14 @@ export default function AdminPage() {
               >
                 <span className="text-base font-semibold">メンバー管理</span>
                 <div className="flex items-center gap-2">
-                  <Users size={18} className="text-muted-foreground" />
+                  <div className="relative">
+                    <Users size={18} className="text-muted-foreground" />
+                    {pendingMemberCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-[#E8740C] text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">
+                        {pendingMemberCount}
+                      </span>
+                    )}
+                  </div>
                   {membersOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
                 </div>
               </button>

@@ -59,6 +59,7 @@ export default function MyPage() {
   const [editCompanionEmails, setEditCompanionEmails] = useState<string[]>([]);
   const [editCompanionFirstTime, setEditCompanionFirstTime] = useState<boolean[]>([]);
   const [successMessage, setSuccessMessage] = useState("");
+  const [memberToast, setMemberToast] = useState(false);
 
   const fetchBookings = useCallback(async (email: string) => {
     const { data } = await supabase
@@ -80,7 +81,18 @@ export default function MyPage() {
       setUserEmail(savedEmail);
       fetchBookings(savedEmail);
       supabase.from("members").select("id, status").eq("email", savedEmail.toLowerCase()).maybeSingle()
-        .then(({ data }) => { if (data && data.status === "confirmed") setIsMember(true); });
+        .then(({ data }) => {
+          if (data && data.status === "confirmed") {
+            setIsMember(true);
+            // Show welcome toast only once
+            const toastKey = `mariko_member_welcomed_${savedEmail}`;
+            if (!localStorage.getItem(toastKey)) {
+              setMemberToast(true);
+              localStorage.setItem(toastKey, "true");
+              setTimeout(() => setMemberToast(false), 5000);
+            }
+          }
+        });
     } else {
       setLoading(false);
     }
@@ -693,6 +705,21 @@ export default function MyPage() {
           <div className="flex items-center gap-3 bg-card border border-primary/20 rounded-2xl p-4 shadow-lg">
             <CircleCheck size={20} className="text-primary shrink-0" />
             <span className="text-sm font-medium text-foreground">{successMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Member Welcome Toast */}
+      {memberToast && (
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] max-w-[380px] w-[calc(100%-48px)] animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center gap-3 bg-[#1A1918] rounded-[14px] p-3.5 px-4 shadow-lg">
+            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <CircleCheck size={16} className="text-white" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-semibold text-white">メンバーになりました！</span>
+              <span className="text-xs text-white/65">Mariko Organics メンバーへようこそ</span>
+            </div>
           </div>
         </div>
       )}

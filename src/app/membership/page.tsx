@@ -78,6 +78,20 @@ export default function MembershipPage() {
     } catch {
       // Email send failure shouldn't block signup
     }
+    // Notify admin about new member application
+    try {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "admin_new_member",
+          email: email.trim().toLowerCase(),
+          name: name.trim(),
+        }),
+      });
+    } catch {
+      // Admin notification failure shouldn't block signup
+    }
     // Save to localStorage
     localStorage.setItem("mariko_name", name);
     localStorage.setItem("mariko_email", email);
@@ -158,11 +172,13 @@ export default function MembershipPage() {
 
         {/* Registration Form or Success */}
         {submitted ? (
-          <div className="bg-[#C8F0D8] rounded-2xl p-6 text-center flex flex-col gap-3">
-            <span className="text-2xl">🎉</span>
-            <h3 className="text-lg font-semibold text-primary">メンバー登録完了！</h3>
-            <p className="text-sm text-primary">
-              メンバー限定レッスンが表示されるようになりました。
+          <div className="bg-card rounded-2xl p-6 text-center flex flex-col items-center gap-3 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-[#C8F0D8] flex items-center justify-center">
+              <Crown size={24} className="text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold">お申し込みありがとうございます</h3>
+            <p className="text-sm text-muted-foreground">
+              確認メールをお送りしました。<br />メールをご確認ください。
             </p>
             <Link href="/" className="text-sm font-medium text-primary underline mt-2">
               ホームに戻る

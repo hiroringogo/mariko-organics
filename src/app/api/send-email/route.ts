@@ -72,6 +72,32 @@ export async function POST(req: NextRequest) {
       vars = {
         customer_name: name,
       };
+    } else if (type === "admin_new_member") {
+      // Notify admin about new member application
+      const { name } = body;
+      const { data: settingsData } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "admin_email")
+        .single();
+      const adminEmail = settingsData?.value || process.env.ADMIN_EMAIL || "mariko.organics@authenticknt.com";
+      await resend.emails.send({
+        from: "Mariko Organics <noreply@send.authenticknt.com>",
+        to: adminEmail,
+        subject: `新しいメンバー申請: ${name}様`,
+        text: `${name}様（${email}）から新しいメンバー申請がありました。\n\n管理画面のメンバー管理から承認してください。\nhttps://ca.authenticknt.com/admin`,
+      });
+      return NextResponse.json({ success: true });
+    } else if (type === "member_approved") {
+      // Notify user that their membership has been approved
+      const { name } = body;
+      await resend.emails.send({
+        from: "Mariko Organics <noreply@send.authenticknt.com>",
+        to: email,
+        subject: "メンバーシップが承認されました！",
+        text: `${name}様\n\nMariko Organicsメンバーシップが承認されました！\n\nマイページからメンバー限定レッスンの予約が可能になりました。\nhttps://ca.authenticknt.com/mypage\n\nMariko Organics`,
+      });
+      return NextResponse.json({ success: true });
     } else if (type === "admin_booking_change") {
       // Direct admin notification - no template needed
       const { bookingName, lessonDate, participantCount, companionNames } = body;

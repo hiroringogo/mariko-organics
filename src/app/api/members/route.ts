@@ -33,6 +33,13 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Missing member ID" }, { status: 400 });
   }
 
+  // Get member info before updating
+  const { data: member } = await supabase
+    .from("members")
+    .select("email, name")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("members")
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
@@ -40,6 +47,24 @@ export async function PUT(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Send approval email to user
+  if (member) {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://ca.authenticknt.com";
+      await fetch(`${baseUrl}/api/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "member_approved",
+          email: member.email,
+          name: member.name || "",
+        }),
+      });
+    } catch {
+      // Email failure shouldn't block approval
+    }
   }
 
   return NextResponse.json({ success: true });
