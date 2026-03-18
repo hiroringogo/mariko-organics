@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export async function GET(req: NextRequest) {
+  const cookie = req.cookies.get("admin_auth");
+  if (cookie?.value === "true") {
+    return NextResponse.json({ authed: true });
+  }
+  return NextResponse.json({ authed: false }, { status: 401 });
+}
+
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
 

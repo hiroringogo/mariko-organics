@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import X from "lucide-react/dist/esm/icons/x";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
+import ImageIcon from "lucide-react/dist/esm/icons/image";
+import { supabase } from "@/lib/supabase";
 
 interface LessonFormData {
   title: string;
@@ -16,35 +18,48 @@ interface LessonFormData {
   workshop_title: string;
   workshop_subtitle: string;
   description: string;
-  is_published?: boolean;
   is_member_published?: boolean;
+  is_published?: boolean;
+  image_url?: string | null;
 }
 
 interface LessonFormProps {
-  initial?: LessonFormData;
+  initial?: LessonFormData & { image_url?: string | null };
   onSubmit: (data: LessonFormData) => Promise<void>;
   onSubmitMultiple?: (dataList: LessonFormData[]) => Promise<void>;
   onCancel: () => void;
   submitLabel: string;
+  defaultMonth?: string; // "YYYY-MM" format — カレンダーをこの月で開く
 }
 
-export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, submitLabel }: LessonFormProps) {
+export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, submitLabel, defaultMonth }: LessonFormProps) {
   // workshop_title = ワークショップ名（例：グルテンフリーワークショップ）
   const [workshopTitle, setWorkshopTitle] = useState(initial?.workshop_title ?? "グルテンフリーワークショップ");
   // workshop_subtitle = クラス名（例：3月：生米パン・ド・ロー）— ユーザーが見るメインタイトル
   const [workshopSubtitle, setWorkshopSubtitle] = useState(initial?.workshop_subtitle ?? "");
   // description = 説明文
   const [description, setDescription] = useState(initial?.description ?? "");
-  // dates
-  const [dates, setDates] = useState<string[]>(initial?.date ? [initial.date] : [""]);
+  // dates — 管理画面で選択中の月の1日をデフォルトに設定
+  const [dates, setDates] = useState<string[]>(() => {
+    if (initial?.date) return [initial.date];
+    if (defaultMonth) return [`${defaultMonth}-01`];
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const yyyy = nextMonth.getFullYear();
+    const mm = String(nextMonth.getMonth() + 1).padStart(2, "0");
+    return [`${yyyy}-${mm}-01`];
+  });
   const [startTime, setStartTime] = useState(initial?.start_time?.slice(0, 5) ?? "10:00");
   const [endTime, setEndTime] = useState(initial?.end_time?.slice(0, 5) ?? "13:00");
   const [totalSeats, setTotalSeats] = useState(initial?.total_seats ?? 6);
   const [minSeats, setMinSeats] = useState(initial?.min_seats ?? 4);
-  const [price, setPrice] = useState(initial?.price ?? 52);
+  const [price, setPrice] = useState(initial?.price ?? 50);
   const [isMemberPublished, setIsMemberPublished] = useState(initial?.is_member_published ?? false);
   const [isPublished, setIsPublished] = useState(initial?.is_published ?? false);
   const [submitting, setSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEdit = !!initial;
   const validDates = dates.filter(Boolean);
@@ -57,7 +72,31 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
     return `${dayNames[d.getDay()]}曜クラス`;
   }
 
-  function buildData(dateStr: string): LessonFormData {
+  async function uploadImage(): Promise<string | undefined> {
+    if (!imageFile) return initial?.image_url || undefined;
+    const ext = imageFile.name.split(".").pop() ?? "jpg";
+    const fileName = `${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("lesson-images")
+      .upload(fileName, imageFile, { upsert: true });
+    if (error) {
+      alert("画像のアップロードに失敗しました: " + error.message);
+      return initial?.image_url || undefined;
+    }
+    const { data: urlData } = supabase.storage
+      .from("lesson-images")
+      .getPublicUrl(fileName);
+    return urlData.publicUrl;
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function buildData(dateStr: string, imageUrl?: string): LessonFormData {
     return {
       title: autoTitle(dateStr),
       date: dateStr,
@@ -69,8 +108,9 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       workshop_title: workshopTitle,
       workshop_subtitle: workshopSubtitle,
       description,
+      is_member_published: isMemberPublished,
       is_published: isPublished,
-      is_member_published: isMemberPublished || isPublished,
+      image_url: imageUrl,
     };
   }
 
@@ -79,12 +119,14 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
     if (validDates.length === 0) return;
     setSubmitting(true);
 
+    const imageUrl = await uploadImage();
+
     if (isEdit) {
-      await onSubmit(buildData(dates[0]));
+      await onSubmit(buildData(dates[0], imageUrl));
     } else if (onSubmitMultiple && validDates.length > 1) {
-      await onSubmitMultiple(validDates.map(buildData));
+      await onSubmitMultiple(validDates.map((d) => buildData(d, imageUrl)));
     } else {
-      await onSubmit(buildData(dates[0]));
+      await onSubmit(buildData(dates[0], imageUrl));
     }
     setSubmitting(false);
   }
@@ -126,18 +168,6 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       </p>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>ワークショップ名</label>
-        <input
-          type="text"
-          value={workshopTitle}
-          onChange={(e) => setWorkshopTitle(e.target.value)}
-          placeholder="グルテンフリーワークショップ"
-          className={inputClass}
-        />
-        <p className="text-[11px] text-muted-foreground">ページ上部のタグに表示されます</p>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
         <label className={labelClass}>クラス名</label>
         <input
           type="text"
@@ -153,6 +183,43 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
         <label className={labelClass}>説明文</label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="レッスンの説明..."
           className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none w-full" />
+      </div>
+
+      {/* Image Upload */}
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>ヒーロー写真</label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+        {imagePreview ? (
+          <div className="relative rounded-xl overflow-hidden h-[140px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imagePreview} alt="プレビュー" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-white/90 text-foreground text-xs font-medium rounded-full px-3 py-1.5"
+              >
+                写真を変更
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-2 h-[100px] rounded-xl border-2 border-dashed border-input bg-accent text-muted-foreground hover:border-primary transition-colors"
+          >
+            <ImageIcon size={24} />
+            <span className="text-xs">タップして写真を選択</span>
+          </button>
+        )}
+        <p className="text-[11px] text-muted-foreground">レッスンページの上部に表示されます</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -215,8 +282,8 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       <div className="flex flex-col gap-3 py-2">
         <div className="flex items-center justify-between">
           <div>
-            <span className={labelClass}>会員先行公開</span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">ONにすると会員だけに先行表示されます</p>
+            <span className={labelClass}>メンバー先行公開</span>
+            <p className="text-[11px] text-muted-foreground mt-0.5">ONにするとメンバーだけに先行表示されます</p>
           </div>
           <button
             type="button"
@@ -248,8 +315,11 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       <button type="submit" disabled={validDates.length === 0 || submitting}
         className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2 mt-2">
         {submitting && <Loader2 size={18} className="animate-spin" />}
-        {buttonText}
+        {!isMemberPublished && !isPublished ? "下書きとして保存" : buttonText}
       </button>
+      {!isMemberPublished && !isPublished && (
+        <p className="text-xs text-muted-foreground text-center -mt-2">公開設定はあとから変更できます</p>
+      )}
     </form>
   );
 }

@@ -2,7 +2,7 @@ export const t = {
   // Tab bar
   home: { ja: "ホーム", en: "Home" },
   book: { ja: "予約", en: "Book" },
-  shop: { ja: "物販", en: "Shop" },
+  shop: { ja: "ショップ", en: "Shop" },
   myPage: { ja: "マイページ", en: "My Page" },
 
   // Home page
@@ -13,7 +13,7 @@ export const t = {
   classSchedule: { ja: "レッスン日程", en: "Class Schedule" },
   viewMore: { ja: "他の日程も見る →", en: "View more dates →" },
   announcements: { ja: "お知らせ", en: "Announcements" },
-  memberPromo: { ja: "メンバーシップ先行予約受付中！", en: "Membership early booking now open!" },
+  memberPromo: { ja: "メンバー先行予約受付中！", en: "Members Early Access now open!" },
   memberPromoSub: { ja: "年会費で特典いっぱい。詳しくはこちら →", en: "Annual fee with great perks. Learn more →" },
 
   // Lesson card
@@ -42,24 +42,24 @@ export const t = {
   namePlaceholder: { ja: "例：田中 花子", en: "e.g. Jane Smith" },
   emailLabel: { ja: "メールアドレス", en: "Email Address" },
   emailPlaceholder: { ja: "example@email.com", en: "example@email.com" },
-  phoneLabel: { ja: "電話番号", en: "Phone" },
-  optional: { ja: "任意", en: "Optional" },
-  phoneHint: { ja: "SMSでリマインダーをお送りします", en: "We'll send you a reminder via SMS" },
   participantCount: { ja: "参加人数", en: "Number of Guests" },
   companionNames: { ja: "同伴者のお名前", en: "Companion Names" },
   notesLabel: { ja: "備考（アレルギーなど）", en: "Notes (allergies, etc.)" },
   notesPlaceholder: { ja: "ご自由にご記入ください", en: "Feel free to write anything here" },
-  noRegistration: { ja: "※ 会員登録不要で予約できます", en: "* No account registration required to book" },
+  referredByLabel: { ja: "紹介者のお名前", en: "Referred by" },
+  referredByPlaceholder: { ja: "どなたのご紹介ですか？", en: "Who referred you?" },
+  referredBy: { ja: "紹介者", en: "Referred by" },
+  noRegistration: { ja: "※ メンバー登録不要で予約できます", en: "* No account registration required to book" },
 
-  // Cancellation policy
-  cancellationTitle: { ja: "キャンセルについて", en: "Cancellation Policy" },
+  // Booking policy
+  cancellationTitle: { ja: "ご予約について", en: "About Your Booking" },
+  cancellationBullet0: {
+    ja: "予約確定後、詳細についてメールをお送りします",
+    en: "After your booking is confirmed, we will send you the details via email.",
+  },
   cancellationBullet1: {
     ja: "やむを得ずにお越しいただけない場合は、同月または翌月のレッスンのお振替が可能です",
-    en: "Reschedule within the same or next month. If unable, refund minus $5/person fee.",
-  },
-  cancellationBullet2: {
-    ja: "お振替が難しい場合、手数料$5/人を除いた金額をお支払いいただいたクレジットカードにご返金します",
-    en: "If rescheduling is not possible, refund minus $5/person fee to your credit card.",
+    en: "If you are unable to attend, you may reschedule to a lesson within the same or next month.",
   },
 
   // Booking confirm page
@@ -69,9 +69,7 @@ export const t = {
   guests: { ja: "参加人数", en: "Guests" },
   companions: { ja: "同伴者", en: "Companions" },
   total: { ja: "合計", en: "Total" },
-  proceedToPayment: { ja: "お支払いへ進む", en: "Proceed to Payment" },
-  stripeNote: { ja: "Stripeの安全な決済ページに移動します", en: "You'll be redirected to Stripe's secure checkout" },
-  cardPayment: { ja: "クレジットカード決済", en: "Credit Card Payment" },
+  proceedToPayment: { ja: "予約を確定する", en: "Confirm Booking" },
 
   // Booking complete page
   bookingConfirmed: { ja: "予約が確定しました！", en: "Booking Confirmed!" },
@@ -79,7 +77,7 @@ export const t = {
     ja: "確認メールをお送りしました。\n当日の詳細はメールをご確認ください。",
     en: "A confirmation email has been sent.\nPlease check your inbox.",
   },
-  amountPaid: { ja: "お支払い金額", en: "Amount Paid" },
+  amountPaid: { ja: "レッスン料金", en: "Lesson Fee" },
   backToHome: { ja: "ホームに戻る", en: "Back to Home" },
   viewInMyPage: { ja: "マイページで確認", en: "View in My Page" },
 
@@ -96,17 +94,23 @@ export const t = {
   cancel: { ja: "キャンセル", en: "Cancel" },
   lessonHistory: { ja: "レッスン履歴", en: "Lesson History" },
   cancelled: { ja: "キャンセル済み", en: "Cancelled" },
+  edit: { ja: "変更", en: "Edit" },
+  editBooking: { ja: "予約を変更", en: "Edit Booking" },
+  changeDate: { ja: "レッスン日の変更", en: "Change Lesson Date" },
+  changeParticipants: { ja: "参加人数の変更", en: "Change Number of Guests" },
+  saveChanges: { ja: "変更を保存する", en: "Save Changes" },
+  bookingUpdated: { ja: "予約を変更しました", en: "Booking updated" },
 
   // Membership
   membership: { ja: "メンバーシップ", en: "Membership" },
   memberTitle: { ja: "Mariko Organics\nメンバーシップ", en: "Mariko Organics\nMembership" },
   memberFee: { ja: "年会費 $40 で特典いっぱい", en: "Full of benefits with $40 annual fee" },
   memberBenefits: { ja: "メンバー特典", en: "Member Benefits" },
-  benefit1Title: { ja: "先行予約・日程リクエスト", en: "Early Booking & Date Requests" },
+  benefit1Title: { ja: "メンバー先行予約", en: "Members Early Access" },
   benefit1Desc: { ja: "一般公開前にレッスンの予約が可能", en: "Get early access to lesson reservations" },
   benefit2Title: { ja: "メンバー限定クラス", en: "Members-Only Classes" },
   benefit2Desc: { ja: "特別なテーマのプライベートレッスン", en: "Access exclusive classes available only to members" },
-  benefit3Title: { ja: "物販の先行予約・限定販売", en: "Early Access & Exclusive Products" },
+  benefit3Title: { ja: "ショップの先行予約・限定販売", en: "Early Access & Exclusive Products" },
   benefit3Desc: { ja: "米粉やオリジナル商品の優先購入", en: "Get early access to ingredients and limited-edition products" },
   benefit4Title: { ja: "過去レシピのオンライン閲覧", en: "Online Recipe Archive" },
   benefit4Desc: { ja: "これまでのレッスンレシピをいつでも確認", en: "Browse past class recipes online anytime" },

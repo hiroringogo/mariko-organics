@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Bell from "lucide-react/dist/esm/icons/bell";
+import Leaf from "lucide-react/dist/esm/icons/leaf";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Link from "next/link";
 import { TabBar } from "@/components/tab-bar";
@@ -21,6 +21,19 @@ interface Lesson {
   seats_remaining: number;
   is_published: boolean;
   is_member_published: boolean;
+  workshop_subtitle: string;
+  description: string;
+  image_url: string | null;
+}
+
+function formatTime(start: string, end: string) {
+  const fmt = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    const suffix = h >= 12 ? "PM" : "AM";
+    const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
+  };
+  return `${fmt(start)} - ${fmt(end)}`;
 }
 
 export default function Home() {
@@ -37,10 +50,10 @@ export default function Home() {
         try {
           const { data: member } = await supabase
             .from("members")
-            .select("id")
+            .select("id, status")
             .eq("email", savedEmail)
             .maybeSingle();
-          memberFlag = !!member;
+          memberFlag = !!member && member.status === "confirmed";
           setIsMember(memberFlag);
         } catch {
           // members table may not exist yet
@@ -71,36 +84,28 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background pb-20">
       {/* Header */}
       <header className="flex items-center justify-between px-6 h-14">
-        <span className="text-xl font-bold text-primary tracking-tight">
-          Mariko Organics
-        </span>
+        <div className="flex flex-col items-center" style={{ gap: '2px' }}>
+          <span className="font-[family-name:var(--font-playfair)] text-[22px] font-black tracking-[3px] text-[#B83A2A]">
+            MARIKO
+          </span>
+          <span className="font-[family-name:var(--font-playfair)] text-[11px] font-bold tracking-[5px] text-[#B83A2A]">
+            ORGANICS
+          </span>
+        </div>
         <div className="flex items-center gap-3">
           <LanguageToggle />
-          <Bell size={22} className="text-muted-foreground" />
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="relative mx-0 h-[200px] overflow-hidden bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/images/hero.jpg?v=2"
-          alt={t.lessonTitle[lang]}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-foreground/80" />
-        <div className="absolute inset-0 flex flex-col justify-end p-6 pb-5 gap-1">
-          <span className="text-sm font-medium text-white/80">
-            {t.heroTag[lang]}
+      {/* Brand Header */}
+      <div className="flex items-center justify-center gap-3 bg-gradient-to-b from-[#E8F5E9] to-[#C8E6C9] py-5 px-6">
+        <Leaf size={24} className="text-primary" />
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-base font-bold text-primary tracking-tight">
+            {lang === "ja" ? "グルテンフリー料理教室" : "Gluten-Free Cooking Class"}
           </span>
-          <p className="text-xs text-white/70">
+          <span className="text-xs text-primary/70">
             {t.heroSub[lang]}
-          </p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            {t.heroTitle[lang]}
-          </h1>
-          <span className="text-sm text-white/85">
-            {t.heroDesc[lang]}
           </span>
         </div>
       </div>
@@ -121,12 +126,13 @@ export default function Home() {
               month={month}
               day={day}
               dayOfWeek={dayOfWeek}
-              title={t.lessonTitle[lang]}
-              subtitle={lesson.title}
-              time={`${lesson.start_time.slice(0, 5)} AM - ${lesson.end_time.slice(0, 5)} PM`}
+              title={lesson.workshop_subtitle || t.lessonTitle[lang]}
+              imageUrl={lesson.image_url}
+              time={formatTime(lesson.start_time, lesson.end_time)}
               seatsRemaining={lesson.seats_remaining}
               totalSeats={lesson.total_seats}
               colorVariant={i % 2 === 0 ? "primary" : "terracotta"}
+              isMemberOnly={lesson.is_member_published && !lesson.is_published}
             />
           );
         })}

@@ -18,6 +18,21 @@ interface Lesson {
   end_time: string;
   total_seats: number;
   seats_remaining: number;
+  is_published: boolean;
+  is_member_published: boolean;
+  workshop_subtitle: string;
+  description: string;
+  image_url: string | null;
+}
+
+function formatTime(start: string, end: string) {
+  const fmt = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    const suffix = h >= 12 ? "PM" : "AM";
+    const h12 = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
+  };
+  return `${fmt(start)} - ${fmt(end)}`;
 }
 
 export default function LessonsPage() {
@@ -33,10 +48,10 @@ export default function LessonsPage() {
         try {
           const { data: member } = await supabase
             .from("members")
-            .select("id")
+            .select("id, status")
             .eq("email", savedEmail)
             .maybeSingle();
-          isMember = !!member;
+          isMember = !!member && member.status === "confirmed";
         } catch {
           // members table may not exist yet
         }
@@ -93,12 +108,13 @@ export default function LessonsPage() {
                 month={month}
                 day={day}
                 dayOfWeek={dayOfWeek}
-                title={t.lessonTitle[lang]}
-                subtitle={lesson.title}
-                time={`${lesson.start_time.slice(0, 5)} AM - ${lesson.end_time.slice(0, 5)} PM`}
+                title={lesson.workshop_subtitle || t.lessonTitle[lang]}
+                imageUrl={lesson.image_url}
+                time={formatTime(lesson.start_time, lesson.end_time)}
                 seatsRemaining={lesson.seats_remaining}
                 totalSeats={lesson.total_seats}
                 colorVariant={i % 2 === 0 ? "primary" : "terracotta"}
+                isMemberOnly={lesson.is_member_published && !lesson.is_published}
               />
             );
           })

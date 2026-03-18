@@ -26,7 +26,11 @@ create table bookings (
   phone text,
   participant_count int not null default 1,
   companion_names text[],
+  companion_emails text[],
+  companion_first_time boolean[],
   notes text,
+  is_first_time boolean default false,
+  referred_by text,
   status text not null default 'confirmed' check (status in ('confirmed', 'cancelled')),
   payment_status text not null default 'unpaid' check (payment_status in ('unpaid', 'paid', 'refunded')),
   created_at timestamptz default now()
@@ -72,10 +76,39 @@ create table members (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
   name text,
+  status text not null default 'pending' check (status in ('pending', 'confirmed')),
+  confirmed_at timestamptz,
   created_at timestamptz default now()
 );
+
+-- サイト設定テーブル（管理者が編集可能なコンテンツ）
+create table site_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz default now()
+);
+
+alter table site_settings enable row level security;
+create policy "Anyone can read settings" on site_settings for select using (true);
+create policy "Anyone can upsert settings" on site_settings for insert with check (true);
+create policy "Anyone can update settings" on site_settings for update using (true) with check (true);
+
+-- メンバーシップページのデフォルト値
+insert into site_settings (key, value) values
+  ('membership_price', '$40'),
+  ('membership_price_monthly', '$3.3'),
+  ('membership_benefit_1', '先行予約・空席リクエスト'),
+  ('membership_benefit_1_desc', 'レッスンの先行予約や、満席クラスへのリクエストができます'),
+  ('membership_benefit_2', 'メンバー限定クラス'),
+  ('membership_benefit_2_desc', '特別テーマや少人数制の限定レッスンに参加できます'),
+  ('membership_benefit_3', '物販の特注・特注・厳選配送'),
+  ('membership_benefit_3_desc', 'ワークショップで使用する厳選素材をお得に購入できます'),
+  ('membership_benefit_4', '過去レシピのオンライン閲覧'),
+  ('membership_benefit_4_desc', '過去のレッスンレシピをオンラインでいつでも見返せます'),
+  ('membership_note', 'いつでも解約可能。お気軽にお申し込みください。');
 
 alter table members enable row level security;
 create policy "Anyone can check membership" on members for select using (true);
 create policy "Anyone can manage members" on members for insert with check (true);
+create policy "Anyone can update members" on members for update using (true) with check (true);
 create policy "Anyone can delete members" on members for delete using (true);

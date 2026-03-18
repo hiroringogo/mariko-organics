@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
-import CreditCard from "lucide-react/dist/esm/icons/credit-card";
-import Lock from "lucide-react/dist/esm/icons/lock";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import { useLanguage } from "@/lib/i18n";
 import { t, formatDateFull, formatMonth } from "@/lib/translations";
@@ -19,7 +17,11 @@ interface BookingData {
   phone: string | null;
   participantCount: number;
   companions: string[];
+  companionEmails: string[];
+  companionFirstTime: boolean[];
   notes: string | null;
+  isFirstTime: boolean;
+  referredBy: string | null;
   lessonDate: string;
   lessonStartTime: string;
   lessonEndTime: string;
@@ -63,6 +65,9 @@ export default function BookingConfirmPage() {
     if (!bookingData) return;
     setSubmitting(true);
 
+    const companionEmails = bookingData.companionEmails || [];
+    const companionFirstTime = bookingData.companionFirstTime || [];
+
     const { error } = await supabase.from("bookings").insert({
       lesson_id: bookingData.lessonId,
       name: bookingData.name,
@@ -70,15 +75,20 @@ export default function BookingConfirmPage() {
       phone: bookingData.phone,
       participant_count: bookingData.participantCount,
       companion_names: bookingData.companions.length > 0 ? bookingData.companions : null,
+      companion_emails: companionEmails.some(Boolean) ? companionEmails : null,
+      companion_first_time: companionFirstTime.some(Boolean) ? companionFirstTime : null,
       notes: bookingData.notes,
+      is_first_time: bookingData.isFirstTime,
+      referred_by: bookingData.referredBy,
     });
 
     if (!error) {
+      // Send email to the representative (different template for first-time vs returning)
       await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "lesson_booking",
+          type: bookingData.isFirstTime ? "lesson_booking_first" : "lesson_booking",
           name: bookingData.name,
           email: bookingData.email,
           lessonTitle: bookingData.lessonTitle,
@@ -89,6 +99,29 @@ export default function BookingConfirmPage() {
           lessonPrice: bookingData.lessonPrice,
         }),
       }).catch(() => {});
+
+      // Send confirmation emails to companions with email addresses
+      for (let i = 0; i < companionEmails.length; i++) {
+        const ce = companionEmails[i]?.trim();
+        if (ce) {
+          const companionIsFirstTime = companionFirstTime[i] || false;
+          await fetch("/api/send-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: companionIsFirstTime ? "lesson_booking_first" : "lesson_booking",
+              name: bookingData.companions[i] || ce,
+              email: ce,
+              lessonTitle: bookingData.lessonTitle,
+              lessonDate: formatDateFull(bookingData.lessonDate, "ja"),
+              lessonTime: timeStr,
+              participantCount: 1,
+              companionNames: [],
+              lessonPrice: bookingData.lessonPrice,
+            }),
+          }).catch(() => {});
+        }
+      }
 
       router.push(`/lessons/${params.id}/complete`);
     }
@@ -140,15 +173,35 @@ export default function BookingConfirmPage() {
               <span className="text-sm text-muted-foreground">{t.guests[lang]}</span>
               <span className="text-sm font-medium">{lang === "ja" ? `${bookingData.participantCount}名` : bookingData.participantCount}</span>
             </div>
-            {bookingData.companions.length > 0 && (
+            {bookingData.referredBy && (
               <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">{t.referredBy[lang]}</span>
+                <span className="text-sm font-medium">{bookingData.referredBy}</span>
+              </div>
+            )}
+            {bookingData.companions.length > 0 && (
+              <div className="flex flex-col gap-2">
                 <span className="text-sm text-muted-foreground">{t.companions[lang]}</span>
-                <span className="text-sm font-medium">
-                  {bookingData.companions.join(lang === "ja" ? "、" : ", ")}
-                  {bookingData.participantCount > bookingData.companions.length + 1 &&
-                    ` ${lang === "ja" ? "他" : "+"}${bookingData.participantCount - bookingData.companions.length - 1}${lang === "ja" ? "名" : ""}`
-                  }
-                </span>
+                {bookingData.companions.map((name, i) => (
+                  <div key={i} className="flex items-center justify-between pl-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{name || (lang === "ja" ? "未入力" : "Not provided")}</span>
+                      {bookingData.companionEmails?.[i] && (
+                        <span className="text-xs text-muted-foreground">{bookingData.companionEmails[i]}</span>
+                      )}
+                    </div>
+                    {bookingData.companionFirstTime?.[i] && (
+                      <span className="text-[10px] font-medium rounded-full px-2 py-0.5 bg-[#DBEAFE] text-[#2563EB]">
+                        {lang === "ja" ? "初回" : "1st"}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {bookingData.participantCount > bookingData.companions.length + 1 && (
+                  <span className="text-xs text-muted-foreground pl-2">
+                    {lang === "ja" ? `他${bookingData.participantCount - bookingData.companions.length - 1}名` : `+${bookingData.participantCount - bookingData.companions.length - 1} more`}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -178,29 +231,13 @@ export default function BookingConfirmPage() {
             {submitting && <Loader2 size={18} className="animate-spin" />}
             {t.proceedToPayment[lang]}
           </button>
-          <div className="flex items-center justify-center gap-1.5">
-            <Lock size={12} className="text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{t.stripeNote[lang]}</span>
-          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            {lang === "ja"
+              ? `確定後、${bookingData.email} に詳細をお送りします`
+              : `Details will be sent to ${bookingData.email}`}
+          </p>
         </div>
 
-        {/* Cancellation Policy */}
-        <div className="bg-card rounded-[16px] p-4 flex flex-col gap-2.5 border border-border">
-          <div className="flex items-center gap-2">
-            <CreditCard size={16} className="text-muted-foreground" />
-            <h3 className="text-sm font-semibold">{t.cancellationTitle[lang]}</h3>
-          </div>
-          <ul className="flex flex-col gap-1.5">
-            <li className="text-xs text-muted-foreground leading-relaxed flex gap-2">
-              <span className="shrink-0">・</span>
-              <span>{t.cancellationBullet1[lang]}</span>
-            </li>
-            <li className="text-xs text-muted-foreground leading-relaxed flex gap-2">
-              <span className="shrink-0">・</span>
-              <span>{t.cancellationBullet2[lang]}</span>
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   );

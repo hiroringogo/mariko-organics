@@ -12,7 +12,7 @@ import { t } from "@/lib/translations";
 const tabKeys = [
   { href: "/", icon: House, ja: "ホーム", en: "Home" },
   { href: "/lessons", icon: Calendar, ja: "予約", en: "Book" },
-  { href: "/shop", icon: ShoppingBag, ja: "物販", en: "Shop" },
+  { href: "/shop", icon: ShoppingBag, ja: "ショップ", en: "Shop" },
   { href: "/mypage", icon: User, ja: "マイページ", en: "My Page" },
 ] as const;
 
