@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
       await resend.emails.send({
         from: "Mariko Organics <noreply@send.authenticknt.com>",
         to: email,
-        subject: "メンバーシップが承認されました！",
-        text: `${name}様\n\nMariko Organicsメンバーシップが承認されました！\n\nマイページからメンバー限定レッスンの予約が可能になりました。\nhttps://ca.authenticknt.com/mypage\n\nMariko Organics`,
+        subject: "メンバーシップが承認されました",
+        text: `${name}様\n\nメンバーシップが承認されました。\n\nMariko Organics`,
       });
       return NextResponse.json({ success: true });
     } else if (type === "admin_booking_change") {
