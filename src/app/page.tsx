@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Leaf from "lucide-react/dist/esm/icons/leaf";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Link from "next/link";
@@ -41,44 +41,46 @@ export default function Home() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isMember, setIsMember] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      // Check membership
-      const savedEmail = localStorage.getItem("mariko_email");
-      let memberFlag = false;
-      if (savedEmail) {
-        try {
-          const { data: member } = await supabase
-            .from("members")
-            .select("id, status")
-            .eq("email", savedEmail)
-            .maybeSingle();
-          memberFlag = !!member && member.status === "confirmed";
-          setIsMember(memberFlag);
-        } catch {
-          // members table may not exist yet
-        }
+  const loadLessons = useCallback(async () => {
+    const savedEmail = localStorage.getItem("mariko_email");
+    let memberFlag = false;
+    if (savedEmail) {
+      try {
+        const { data: member } = await supabase
+          .from("members")
+          .select("id, status")
+          .eq("email", savedEmail)
+          .maybeSingle();
+        memberFlag = !!member && member.status === "confirmed";
+        setIsMember(memberFlag);
+      } catch {
+        // members table may not exist yet
       }
-
-      // Fetch lessons: published OR (member-published if member)
-      const query = supabase
-        .from("lesson_with_seats")
-        .select("*")
-        .gte("date", new Date().toISOString().split("T")[0])
-        .order("date", { ascending: true })
-        .limit(3);
-
-      if (memberFlag) {
-        query.or("is_published.eq.true,is_member_published.eq.true");
-      } else {
-        query.eq("is_published", true);
-      }
-
-      const { data } = await query;
-      setLessons(data ?? []);
     }
-    load();
+
+    const query = supabase
+      .from("lesson_with_seats")
+      .select("*")
+      .gte("date", new Date().toISOString().split("T")[0])
+      .order("date", { ascending: true })
+      .limit(3);
+
+    if (memberFlag) {
+      query.or("is_published.eq.true,is_member_published.eq.true");
+    } else {
+      query.eq("is_published", true);
+    }
+
+    const { data } = await query;
+    setLessons(data ?? []);
   }, []);
+
+  useEffect(() => {
+    loadLessons();
+    const onVisible = () => { if (document.visibilityState === "visible") loadLessons(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadLessons]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">

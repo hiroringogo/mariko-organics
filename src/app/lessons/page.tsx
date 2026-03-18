@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import Link from "next/link";
 import { LessonCard } from "@/components/lesson-card";
@@ -40,41 +40,45 @@ export default function LessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      const savedEmail = localStorage.getItem("mariko_email");
-      let isMember = false;
-      if (savedEmail) {
-        try {
-          const { data: member } = await supabase
-            .from("members")
-            .select("id, status")
-            .eq("email", savedEmail)
-            .maybeSingle();
-          isMember = !!member && member.status === "confirmed";
-        } catch {
-          // members table may not exist yet
-        }
+  const loadLessons = useCallback(async () => {
+    const savedEmail = localStorage.getItem("mariko_email");
+    let memberFlag = false;
+    if (savedEmail) {
+      try {
+        const { data: member } = await supabase
+          .from("members")
+          .select("id, status")
+          .eq("email", savedEmail)
+          .maybeSingle();
+        memberFlag = !!member && member.status === "confirmed";
+      } catch {
+        // members table may not exist yet
       }
-
-      const query = supabase
-        .from("lesson_with_seats")
-        .select("*")
-        .gte("date", new Date().toISOString().split("T")[0])
-        .order("date", { ascending: true });
-
-      if (isMember) {
-        query.or("is_published.eq.true,is_member_published.eq.true");
-      } else {
-        query.eq("is_published", true);
-      }
-
-      const { data } = await query;
-      setLessons(data ?? []);
-      setLoaded(true);
     }
-    load();
+
+    const query = supabase
+      .from("lesson_with_seats")
+      .select("*")
+      .gte("date", new Date().toISOString().split("T")[0])
+      .order("date", { ascending: true });
+
+    if (memberFlag) {
+      query.or("is_published.eq.true,is_member_published.eq.true");
+    } else {
+      query.eq("is_published", true);
+    }
+
+    const { data } = await query;
+    setLessons(data ?? []);
+    setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    loadLessons();
+    const onVisible = () => { if (document.visibilityState === "visible") loadLessons(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadLessons]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-[84px]">
