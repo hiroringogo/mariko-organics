@@ -425,6 +425,11 @@ export default function AdminPage() {
     await fetchData();
   }
 
+  async function handleDowngradeToMemberOnly(lessonId: string) {
+    await supabase.from("lessons").update({ is_published: false, is_member_published: true }).eq("id", lessonId);
+    await fetchData();
+  }
+
   // CSV Export
   function downloadCSV(filename: string, headers: string[], rows: string[][]) {
     const bom = "\uFEFF";
@@ -648,23 +653,51 @@ export default function AdminPage() {
                             <Pencil size={13} />
                             編集
                           </button>
-                          <button
-                            onClick={() => handleTogglePublish(lesson.id, "is_published", lesson.is_published)}
-                            className={`text-sm font-medium rounded-full px-3 py-1.5 ${
-                              lesson.is_published ? "bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground"
-                            }`}
-                          >
-                            {lesson.is_published ? "非公開にする" : "一般公開する"}
-                          </button>
-                          {!lesson.is_published && (
-                            <button
-                              onClick={() => handleTogglePublish(lesson.id, "is_member_published", lesson.is_member_published)}
-                              className={`text-sm font-medium rounded-full px-3 py-1.5 ${
-                                lesson.is_member_published ? "bg-secondary text-muted-foreground" : "bg-[#E8D5F5] text-[#7B5EA7]"
-                              }`}
-                            >
-                              {lesson.is_member_published ? "メンバー非公開" : "メンバー公開する"}
-                            </button>
+                          {lesson.is_published ? (
+                            <>
+                              <button
+                                onClick={() => handleDowngradeToMemberOnly(lesson.id)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-[#E8D5F5] text-[#7B5EA7]"
+                              >
+                                メンバー公開にする
+                              </button>
+                              <button
+                                onClick={() => handleTogglePublish(lesson.id, "is_published", true)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-secondary text-muted-foreground"
+                              >
+                                非公開にする
+                              </button>
+                            </>
+                          ) : lesson.is_member_published ? (
+                            <>
+                              <button
+                                onClick={() => handleTogglePublish(lesson.id, "is_published", false)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-primary text-primary-foreground"
+                              >
+                                一般公開する
+                              </button>
+                              <button
+                                onClick={() => handleTogglePublish(lesson.id, "is_member_published", true)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-secondary text-muted-foreground"
+                              >
+                                非公開にする
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleTogglePublish(lesson.id, "is_published", false)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-primary text-primary-foreground"
+                              >
+                                一般公開する
+                              </button>
+                              <button
+                                onClick={() => handleTogglePublish(lesson.id, "is_member_published", false)}
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-[#E8D5F5] text-[#7B5EA7]"
+                              >
+                                メンバー公開する
+                              </button>
+                            </>
                           )}
                           {confirmDelete === lesson.id ? (
                             <div className="flex items-center gap-2">
