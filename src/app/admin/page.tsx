@@ -415,19 +415,25 @@ export default function AdminPage() {
     await fetchData();
   }
 
+  function optimisticUpdateLesson(lessonId: string, update: Record<string, boolean>) {
+    setAllLessons((prev) =>
+      prev.map((l) => (l.id === lessonId ? { ...l, ...update } : l))
+    );
+  }
+
   async function handleTogglePublish(lessonId: string, field: "is_published" | "is_member_published", current: boolean) {
     const update: Record<string, boolean> = { [field]: !current };
-    // 一般公開ON → 会員公開も自動ON
     if (field === "is_published" && !current) {
       update.is_member_published = true;
     }
-    await supabase.from("lessons").update(update).eq("id", lessonId);
-    await fetchData();
+    optimisticUpdateLesson(lessonId, update);
+    supabase.from("lessons").update(update).eq("id", lessonId).then(() => fetchData());
   }
 
   async function handleDowngradeToMemberOnly(lessonId: string) {
-    await supabase.from("lessons").update({ is_published: false, is_member_published: true }).eq("id", lessonId);
-    await fetchData();
+    const update = { is_published: false, is_member_published: true };
+    optimisticUpdateLesson(lessonId, update);
+    supabase.from("lessons").update(update).eq("id", lessonId).then(() => fetchData());
   }
 
   // CSV Export
