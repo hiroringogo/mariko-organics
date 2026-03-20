@@ -37,11 +37,14 @@ export function LessonCard({
   const bgColor = colorVariant === "primary" ? "bg-primary" : "bg-terracotta";
   const seatColor = colorVariant === "primary" ? "text-primary" : "text-terracotta";
 
-  const seatText = lang === "ja"
+  const isFull = seatsRemaining <= 0;
+  const seatText = isFull
+    ? (lang === "ja" ? "満席" : "Full")
+    : lang === "ja"
     ? `残り${seatsRemaining}席`
     : `${seatsRemaining} seats left`;
 
-  const badgeText = lang === "ja" ? "メンバー先行予約" : "Early Access";
+  const badgeText = lang === "ja" ? "プレミアメンバー" : "Premium Member";
 
   return (
     <Link href={`/lessons/${id}`}>
@@ -75,8 +78,8 @@ export function LessonCard({
             {title}
           </span>
           <div className="flex items-center gap-1.5">
-            <Users size={14} className={seatColor} />
-            <span className={`text-[12px] font-medium ${seatColor}`}>
+            <Users size={14} className={isFull ? "text-destructive" : seatColor} />
+            <span className={`text-[12px] font-semibold ${isFull ? "text-destructive" : "text-muted-foreground"}`}>
               {seatText}
             </span>
           </div>

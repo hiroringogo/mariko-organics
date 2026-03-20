@@ -13,7 +13,7 @@ export const t = {
   classSchedule: { ja: "レッスン日程", en: "Class Schedule" },
   viewMore: { ja: "他の日程も見る →", en: "View more dates →" },
   announcements: { ja: "お知らせ", en: "Announcements" },
-  memberPromo: { ja: "メンバー先行予約受付中！", en: "Members Early Access now open!" },
+  memberPromo: { ja: "プレミアメンバー受付中！", en: "Premium Member registration open!" },
   memberPromoSub: { ja: "年会費で特典いっぱい。詳しくはこちら →", en: "Annual fee with great perks. Learn more →" },
 
   // Lesson card
@@ -106,11 +106,11 @@ export const t = {
   memberTitle: { ja: "Mariko Organics\nメンバーシップ", en: "Mariko Organics\nMembership" },
   memberFee: { ja: "年会費 $40 で特典いっぱい", en: "Full of benefits with $40 annual fee" },
   memberBenefits: { ja: "メンバー特典", en: "Member Benefits" },
-  benefit1Title: { ja: "メンバー先行予約", en: "Members Early Access" },
-  benefit1Desc: { ja: "一般公開前にレッスンの予約が可能", en: "Get early access to lesson reservations" },
+  benefit1Title: { ja: "プレミアメンバー限定レッスン", en: "Premium Member Exclusive Lessons" },
+  benefit1Desc: { ja: "メンバー限定のレッスンに参加可能", en: "Access lessons exclusive to Premium Members" },
   benefit2Title: { ja: "メンバー限定クラス", en: "Members-Only Classes" },
   benefit2Desc: { ja: "特別なテーマのプライベートレッスン", en: "Access exclusive classes available only to members" },
-  benefit3Title: { ja: "ショップの先行予約・限定販売", en: "Early Access & Exclusive Products" },
+  benefit3Title: { ja: "ショップの限定販売", en: "Exclusive Products" },
   benefit3Desc: { ja: "米粉やオリジナル商品の優先購入", en: "Get early access to ingredients and limited-edition products" },
   benefit4Title: { ja: "過去レシピのオンライン閲覧", en: "Online Recipe Archive" },
   benefit4Desc: { ja: "これまでのレッスンレシピをいつでも確認", en: "Browse past class recipes online anytime" },

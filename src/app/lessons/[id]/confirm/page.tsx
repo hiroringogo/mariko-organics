@@ -8,7 +8,6 @@ import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import { useLanguage } from "@/lib/i18n";
 import { t, formatDateFull, formatMonth } from "@/lib/translations";
 import { LanguageToggle } from "@/components/language-toggle";
-import { supabase } from "@/lib/supabase";
 
 interface BookingData {
   lessonId: string;
@@ -68,63 +67,92 @@ export default function BookingConfirmPage() {
     const companionEmails = bookingData.companionEmails || [];
     const companionFirstTime = bookingData.companionFirstTime || [];
 
-    const { error } = await supabase.from("bookings").insert({
-      lesson_id: bookingData.lessonId,
-      name: bookingData.name,
-      email: bookingData.email,
-      phone: bookingData.phone,
-      participant_count: bookingData.participantCount,
-      companion_names: bookingData.companions.length > 0 ? bookingData.companions : null,
-      companion_emails: companionEmails.some(Boolean) ? companionEmails : null,
-      companion_first_time: companionFirstTime.some(Boolean) ? companionFirstTime : null,
-      notes: bookingData.notes,
-      is_first_time: bookingData.isFirstTime,
-      referred_by: bookingData.referredBy,
+    // POST to server-side API which performs the seats check before inserting
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        lessonId: bookingData.lessonId,
+        name: bookingData.name,
+        email: bookingData.email,
+        phone: bookingData.phone,
+        participantCount: bookingData.participantCount,
+        companions: bookingData.companions,
+        companionEmails,
+        companionFirstTime,
+        notes: bookingData.notes,
+        isFirstTime: bookingData.isFirstTime,
+        referredBy: bookingData.referredBy,
+      }),
     });
 
-    if (!error) {
-      // Send email to the representative (different template for first-time vs returning)
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: bookingData.isFirstTime ? "lesson_booking_first" : "lesson_booking",
-          name: bookingData.name,
-          email: bookingData.email,
-          lessonTitle: bookingData.lessonTitle,
-          lessonDate: formatDateFull(bookingData.lessonDate, "ja"),
-          lessonTime: timeStr,
-          participantCount: bookingData.participantCount,
-          companionNames: bookingData.companions,
-          lessonPrice: bookingData.lessonPrice,
-        }),
-      }).catch(() => {});
-
-      // Send confirmation emails to companions with email addresses
-      for (let i = 0; i < companionEmails.length; i++) {
-        const ce = companionEmails[i]?.trim();
-        if (ce) {
-          const companionIsFirstTime = companionFirstTime[i] || false;
-          await fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: companionIsFirstTime ? "lesson_booking_first" : "lesson_booking",
-              name: bookingData.companions[i] || ce,
-              email: ce,
-              lessonTitle: bookingData.lessonTitle,
-              lessonDate: formatDateFull(bookingData.lessonDate, "ja"),
-              lessonTime: timeStr,
-              participantCount: 1,
-              companionNames: [],
-              lessonPrice: bookingData.lessonPrice,
-            }),
-          }).catch(() => {});
-        }
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      const errorCode = json.error;
+      if (errorCode === "fully_booked") {
+        alert(
+          lang === "ja"
+            ? "申し訳ありませんが、このレッスンは満席になりました。"
+            : "Sorry, this lesson is now fully booked."
+        );
+      } else if (errorCode === "not_enough_seats") {
+        alert(
+          lang === "ja"
+            ? `残席が不足しています（残り${json.seatsRemaining}席）。参加人数を変更してください。`
+            : `Not enough seats remaining (${json.seatsRemaining} left). Please adjust your guest count.`
+        );
+      } else {
+        alert(
+          lang === "ja"
+            ? "予約中にエラーが発生しました。もう一度お試しください。"
+            : "An error occurred. Please try again."
+        );
       }
-
-      router.push(`/lessons/${params.id}/complete`);
+      setSubmitting(false);
+      return;
     }
+
+    // Send email to the representative (different template for first-time vs returning)
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: bookingData.isFirstTime ? "lesson_booking_first" : "lesson_booking",
+        name: bookingData.name,
+        email: bookingData.email,
+        lessonTitle: bookingData.lessonTitle,
+        lessonDate: formatDateFull(bookingData.lessonDate, "ja"),
+        lessonTime: timeStr,
+        participantCount: bookingData.participantCount,
+        companionNames: bookingData.companions,
+        lessonPrice: bookingData.lessonPrice,
+      }),
+    }).catch(() => {});
+
+    // Send confirmation emails to companions with email addresses
+    for (let i = 0; i < companionEmails.length; i++) {
+      const ce = companionEmails[i]?.trim();
+      if (ce) {
+        const companionIsFirstTime = companionFirstTime[i] || false;
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: companionIsFirstTime ? "lesson_booking_first" : "lesson_booking",
+            name: bookingData.companions[i] || ce,
+            email: ce,
+            lessonTitle: bookingData.lessonTitle,
+            lessonDate: formatDateFull(bookingData.lessonDate, "ja"),
+            lessonTime: timeStr,
+            participantCount: 1,
+            companionNames: [],
+            lessonPrice: bookingData.lessonPrice,
+          }),
+        }).catch(() => {});
+      }
+    }
+
+    router.push(`/lessons/${params.id}/complete`);
     setSubmitting(false);
   }
 
@@ -153,9 +181,9 @@ export default function BookingConfirmPage() {
               <span className="text-[22px] font-bold leading-none text-primary-foreground tracking-tight">{day}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-semibold">{t.lessonTitle[lang]}</span>
+              <span className="text-[15px] font-semibold">{bookingData.lessonTitle}</span>
               <span className="text-xs text-muted-foreground">{timeStr}</span>
-              <span className="text-xs text-muted-foreground">Orange County, CA</span>
+              <span className="text-xs text-muted-foreground">{t.locationDetail[lang]}</span>
             </div>
           </div>
 
@@ -226,7 +254,7 @@ export default function BookingConfirmPage() {
           <button
             onClick={handleConfirm}
             disabled={submitting}
-            className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {submitting && <Loader2 size={18} className="animate-spin" />}
             {t.proceedToPayment[lang]}

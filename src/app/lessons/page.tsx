@@ -21,7 +21,9 @@ interface Lesson {
   is_published: boolean;
   is_member_published: boolean;
   workshop_subtitle: string;
+  workshop_subtitle_en?: string;
   description: string;
+  description_en?: string;
   image_url: string | null;
 }
 
@@ -77,7 +79,11 @@ export default function LessonsPage() {
     loadLessons();
     const onVisible = () => { if (document.visibilityState === "visible") loadLessons(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const interval = setInterval(loadLessons, 30000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(interval);
+    };
   }, [loadLessons]);
 
   return (
@@ -112,7 +118,7 @@ export default function LessonsPage() {
                 month={month}
                 day={day}
                 dayOfWeek={dayOfWeek}
-                title={lesson.workshop_subtitle || t.lessonTitle[lang]}
+                title={(lang === "en" && lesson.workshop_subtitle_en) ? lesson.workshop_subtitle_en : (lesson.workshop_subtitle || t.lessonTitle[lang])}
                 imageUrl={lesson.image_url}
                 time={formatTime(lesson.start_time, lesson.end_time)}
                 seatsRemaining={lesson.seats_remaining}

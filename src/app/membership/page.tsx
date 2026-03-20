@@ -133,7 +133,7 @@ export default function MembershipPage() {
       </header>
 
       {/* Hero */}
-      <div className="flex flex-col items-center gap-3 bg-gradient-to-b from-primary to-[#2D6B44] text-primary-foreground py-8 px-6">
+      <div className="flex flex-col items-center gap-3 bg-gradient-to-b from-primary to-[#5C4A3A] text-primary-foreground py-8 px-6">
         <Crown size={40} className="text-yellow-300" />
         <span className="text-sm font-medium tracking-wider">Mariko Organics</span>
         <span className="text-2xl font-bold">年会費：{s("membership_price", "$40")}</span>
@@ -148,7 +148,7 @@ export default function MembershipPage() {
             const Icon = benefitIcons[i];
             return (
               <div key={i} className="flex items-start gap-4 bg-card rounded-[16px] p-4 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-[#C8F0D8] flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#F5EBE0] flex items-center justify-center shrink-0">
                   <Icon size={20} className="text-primary" />
                 </div>
                 <div className="flex flex-col gap-0.5">
@@ -173,7 +173,7 @@ export default function MembershipPage() {
         {/* Registration Form or Success */}
         {submitted ? (
           <div className="bg-card rounded-2xl p-6 text-center flex flex-col items-center gap-3 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-[#C8F0D8] flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-[#F5EBE0] flex items-center justify-center">
               <Crown size={24} className="text-primary" />
             </div>
             <h3 className="text-lg font-semibold">お申し込みありがとうございます</h3>
@@ -215,7 +215,7 @@ export default function MembershipPage() {
             <button
               onClick={handleSubmit}
               disabled={!name || !email || submitting}
-              className="h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              className="h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <Loader2 size={16} className="animate-spin" />

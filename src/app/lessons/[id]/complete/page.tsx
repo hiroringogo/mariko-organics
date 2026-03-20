@@ -52,7 +52,7 @@ export default function BookingCompletePage() {
       <div className="flex flex-col items-center gap-4 flex-1 justify-center">
         {/* Success Icon */}
         <div className="w-16 h-16 rounded-full bg-[#C8F0D8] flex items-center justify-center">
-          <Check size={32} className="text-primary" />
+          <Check size={32} className="text-[#3D8A5A]" />
         </div>
 
         {/* Title */}
@@ -71,9 +71,9 @@ export default function BookingCompletePage() {
               <span className="text-[22px] font-bold leading-none text-primary-foreground tracking-tight">{day}</span>
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-semibold">{t.lessonTitle[lang]}</span>
+              <span className="text-[15px] font-semibold">{bookingData.lessonTitle}</span>
               <span className="text-xs text-muted-foreground">{timeStr}</span>
-              <span className="text-xs text-muted-foreground">Orange County, CA</span>
+              <span className="text-xs text-muted-foreground">{t.locationDetail[lang]}</span>
             </div>
           </div>
           <div className="flex flex-col gap-2 pt-3">
@@ -92,7 +92,7 @@ export default function BookingCompletePage() {
         <div className="flex flex-col gap-3 w-full mt-4">
           <Link
             href="/"
-            className="h-12 rounded-full bg-primary text-primary-foreground font-semibold flex items-center justify-center"
+            className="h-12 rounded-full bg-cta text-cta-foreground font-semibold flex items-center justify-center"
           >
             {t.backToHome[lang]}
           </Link>

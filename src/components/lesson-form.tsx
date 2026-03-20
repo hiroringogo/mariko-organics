@@ -17,7 +17,9 @@ interface LessonFormData {
   price: number;
   workshop_title: string;
   workshop_subtitle: string;
+  workshop_subtitle_en?: string;
   description: string;
+  description_en?: string;
   is_member_published?: boolean;
   is_published?: boolean;
   image_url?: string | null;
@@ -37,8 +39,10 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
   const [workshopTitle, setWorkshopTitle] = useState(initial?.workshop_title ?? "グルテンフリーワークショップ");
   // workshop_subtitle = クラス名（例：3月：生米パン・ド・ロー）— ユーザーが見るメインタイトル
   const [workshopSubtitle, setWorkshopSubtitle] = useState(initial?.workshop_subtitle ?? "");
+  const [workshopSubtitleEn, setWorkshopSubtitleEn] = useState(initial?.workshop_subtitle_en ?? "");
   // description = 説明文
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [descriptionEn, setDescriptionEn] = useState(initial?.description_en ?? "");
   // dates — 管理画面で選択中の月の1日をデフォルトに設定
   const [dates, setDates] = useState<string[]>(() => {
     if (initial?.date) return [initial.date];
@@ -107,7 +111,9 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       price,
       workshop_title: workshopTitle,
       workshop_subtitle: workshopSubtitle,
+      workshop_subtitle_en: workshopSubtitleEn || undefined,
       description,
+      description_en: descriptionEn || undefined,
       is_member_published: isMemberPublished,
       is_published: isPublished,
       image_url: imageUrl,
@@ -177,12 +183,23 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
           className={inputClass}
         />
         <p className="text-[11px] text-muted-foreground">メインタイトルとして大きく表示されます</p>
+        <input
+          type="text"
+          value={workshopSubtitleEn}
+          onChange={(e) => setWorkshopSubtitleEn(e.target.value)}
+          placeholder="English title (e.g. Raw Rice Pão de Ló)"
+          className={inputClass + " mt-1"}
+        />
+        <p className="text-[11px] text-muted-foreground">🇺🇸 英語版タイトル（空欄なら日本語が表示されます）</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>説明文</label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="レッスンの説明..."
           className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none w-full" />
+        <textarea value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} rows={3} placeholder="English description..."
+          className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none w-full mt-1" />
+        <p className="text-[11px] text-muted-foreground">🇺🇸 英語版説明文（空欄なら日本語が表示されます）</p>
       </div>
 
       {/* Image Upload */}
@@ -282,8 +299,8 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
       <div className="flex flex-col gap-3 py-2">
         <div className="flex items-center justify-between">
           <div>
-            <span className={labelClass}>メンバー先行公開</span>
-            <p className="text-[11px] text-muted-foreground mt-0.5">ONにするとメンバーだけに先行表示されます</p>
+            <span className={labelClass}>プレミアメンバー限定公開</span>
+            <p className="text-[11px] text-muted-foreground mt-0.5">ONにするとプレミアメンバーだけに表示されます</p>
           </div>
           <button
             type="button"

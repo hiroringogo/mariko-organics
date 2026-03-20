@@ -489,7 +489,7 @@ export default function AdminPage() {
 
   // Publish status label
   function publishLabel(lesson: LessonWithBookings) {
-    if (lesson.is_published) return { text: "一般公開", color: "bg-[#C8F0D8] text-primary" };
+    if (lesson.is_published) return { text: "一般公開", color: "bg-[#F5EBE0] text-primary" };
     if (lesson.is_member_published) return { text: "メンバー限定", color: "bg-[#E8D5F5] text-[#7B5EA7]" };
     return { text: "下書き", color: "bg-secondary text-muted-foreground" };
   }
@@ -520,7 +520,7 @@ export default function AdminPage() {
           />
           {authError && <p className="text-sm text-destructive text-center">{authError}</p>}
           <button onClick={handleLogin} disabled={!password}
-            className="h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50">
+            className="h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold disabled:opacity-50">
             ログイン
           </button>
         </div>
@@ -538,7 +538,7 @@ export default function AdminPage() {
           {formMode.type === "closed" && (
             <button
               onClick={() => setFormMode({ type: "add" })}
-              className="flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-full px-3 py-1.5"
+              className="flex items-center gap-1.5 bg-cta text-cta-foreground text-xs font-semibold rounded-full px-3 py-1.5"
             >
               <Plus size={14} />
               レッスン追加
@@ -678,7 +678,7 @@ export default function AdminPage() {
                             <>
                               <button
                                 onClick={() => handleTogglePublish(lesson.id, "is_published", false)}
-                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-primary text-primary-foreground"
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-cta text-cta-foreground"
                               >
                                 一般公開する
                               </button>
@@ -693,7 +693,7 @@ export default function AdminPage() {
                             <>
                               <button
                                 onClick={() => handleTogglePublish(lesson.id, "is_published", false)}
-                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-primary text-primary-foreground"
+                                className="text-sm font-medium rounded-full px-3 py-1.5 bg-cta text-cta-foreground"
                               >
                                 一般公開する
                               </button>
@@ -827,7 +827,7 @@ export default function AdminPage() {
                     </button>
                   </div>
                   <button onClick={() => { exportBookings(); exportStudents(); }}
-                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl py-3 text-sm font-semibold">
+                    className="flex items-center justify-center gap-2 bg-cta text-cta-foreground rounded-xl py-3 text-sm font-semibold">
                     <Download size={14} />
                     全データをダウンロード
                   </button>
@@ -905,7 +905,7 @@ export default function AdminPage() {
                     <button
                       onClick={handleSaveSettings}
                       disabled={settingsSaving}
-                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 mt-1"
+                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-cta text-cta-foreground text-sm font-semibold disabled:opacity-50 mt-1"
                     >
                       {settingsSaving ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -972,7 +972,7 @@ export default function AdminPage() {
                                   承認待ち
                                 </span>
                               ) : (
-                                <span className="flex items-center gap-1 text-[10px] font-semibold rounded-full px-2 py-0.5 bg-[#E8F5E9] text-primary">
+                                <span className="flex items-center gap-1 text-[10px] font-semibold rounded-full px-2 py-0.5 bg-[#F5EBE0] text-primary">
                                   <CircleCheck size={10} />
                                   承認済み
                                 </span>
@@ -1062,7 +1062,7 @@ export default function AdminPage() {
                           <button
                             onClick={() => handleSaveTemplate(template.id)}
                             disabled={templateSaving}
-                            className="flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+                            className="flex items-center justify-center gap-2 h-10 rounded-lg bg-cta text-cta-foreground text-sm font-semibold disabled:opacity-50"
                           >
                             {templateSaving ? (
                               <Loader2 size={14} className="animate-spin" />

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Playfair_Display } from "next/font/google";
+import { Outfit, Playfair_Display, Kalam } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
 
@@ -14,9 +14,20 @@ const playfair = Playfair_Display({
   weight: ["700", "900"],
 });
 
+const kalam = Kalam({
+  variable: "--font-kalam",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
 export const metadata: Metadata = {
   title: "Mariko Organics",
-  description: "米粉のお料理教室 - Orange County, CA",
+  description: "グルテンフリー料理教室 - Orange County, CA",
+  appleWebApp: {
+    capable: true,
+    title: "Mariko Organics",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -32,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${outfit.variable} ${playfair.variable} font-sans antialiased`}>
+      <body className={`${outfit.variable} ${playfair.variable} ${kalam.variable} font-sans antialiased`}>
         <LanguageProvider>
           <div className="mx-auto w-full max-w-lg min-h-screen bg-background shadow-none sm:shadow-xl">
             {children}

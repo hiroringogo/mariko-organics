@@ -1,23 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F5F4F1;
+  --background: #F7EFE5;
   --foreground: #1A1918;
-  --primary: #3D8A5A;
+  --primary: #8B6F5C;
   --primary-foreground: #FFFFFF;
-  --secondary: #EDECEA;
+  --secondary: #EDE5DA;
   --secondary-foreground: #1A1918;
-  --muted: #EDECEA;
+  --muted: #EDE5DA;
   --muted-foreground: #6D6C6A;
-  --card: #FFFFFF;
+  --card: #FFFCF8;
   --card-foreground: #1A1918;
-  --border: #E5E4E1;
+  --border: #E8D5C4;
   --input: #D1D0CD;
-  --ring: #3D8A5A;
+  --ring: #8B6F5C;
   --destructive: #D08068;
   --terracotta: #D89575;
-  --accent: #F5F4F1;
+  --accent: #F7EFE5;
   --accent-foreground: #1A1918;
+  --cta: #3D8A5A;
+  --cta-foreground: #FFFFFF;
   --radius-m: 16px;
   --radius-pill: 100px;
 }
@@ -38,6 +40,8 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-terracotta: var(--terracotta);
+  --color-cta: var(--cta);
+  --color-cta-foreground: var(--cta-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-outfit);
@@ -52,6 +56,6 @@ body {
 
 @media (min-width: 512px) {
   body {
-    background: #E8E7E4;
+    background: #E5D9CC;
   }
 }

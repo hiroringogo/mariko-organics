@@ -34,6 +34,7 @@ interface Booking {
     start_time: string;
     end_time: string;
     workshop_subtitle: string;
+    workshop_subtitle_en?: string;
     total_seats: number;
     min_seats: number;
   };
@@ -52,7 +53,7 @@ export default function MyPage() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editLessonId, setEditLessonId] = useState("");
   const [editParticipantCount, setEditParticipantCount] = useState(1);
-  const [availableLessons, setAvailableLessons] = useState<{ id: string; date: string; start_time: string; end_time: string; seats_remaining: number }[]>([]);
+  const [availableLessons, setAvailableLessons] = useState<{ id: string; date: string; start_time: string; end_time: string; seats_remaining: number; workshop_subtitle: string; workshop_subtitle_en?: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [companionSelected, setCompanionSelected] = useState<boolean[]>([]);
   const [editCompanionNames, setEditCompanionNames] = useState<string[]>([]);
@@ -166,7 +167,7 @@ export default function MyPage() {
     // Fetch available lessons for the same workshop
     const { data } = await supabase
       .from("lesson_with_seats")
-      .select("id, date, start_time, end_time, seats_remaining")
+      .select("id, date, start_time, end_time, seats_remaining, workshop_subtitle")
       .gte("date", new Date().toISOString().split("T")[0])
       .or("is_published.eq.true,is_member_published.eq.true")
       .order("date", { ascending: true });
@@ -293,7 +294,7 @@ export default function MyPage() {
             <button
               onClick={handleEmailLookup}
               disabled={!emailInput || loading}
-              className="h-12 rounded-full bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              className="h-12 rounded-full bg-cta text-cta-foreground text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
               {t.checkBookings[lang]}
@@ -344,9 +345,9 @@ export default function MyPage() {
             <span className="text-lg font-semibold">{userName}</span>
             <span className="text-sm text-muted-foreground">{userEmail}</span>
             {isMember && (
-              <span className="inline-flex items-center gap-1 w-fit text-[11px] font-semibold text-primary bg-[#C8F0D8] rounded-full px-2 py-0.5">
+              <span className="inline-flex items-center gap-1 w-fit text-[11px] font-semibold text-primary bg-[#F5EBE0] rounded-full px-2 py-0.5">
                 <Crown size={12} className="text-[#9B6FC0]" />
-                {lang === "ja" ? "メンバー" : "Member"}
+                {lang === "ja" ? "プレミアメンバー" : "Premium Member"}
               </span>
             )}
           </div>
@@ -389,7 +390,7 @@ export default function MyPage() {
                     </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0">
                       <span className="text-[15px] font-semibold">
-                        {t.lessonTitle[lang]}
+                        {lang === "en" && booking.lesson.workshop_subtitle_en ? booking.lesson.workshop_subtitle_en : booking.lesson.workshop_subtitle}
                       </span>
                       <div className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-muted-foreground" />
@@ -468,7 +469,7 @@ export default function MyPage() {
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="text-[14px] font-medium text-foreground">
-                      {t.lessonTitle[lang]}
+                      {lang === "en" && booking.lesson.workshop_subtitle_en ? booking.lesson.workshop_subtitle_en : booking.lesson.workshop_subtitle}
                     </span>
                     <span className="text-[12px] text-muted-foreground">
                       {isCancelled ? t.cancelled[lang] : booking.lesson.title}
@@ -499,7 +500,7 @@ export default function MyPage() {
             <div className="flex flex-col gap-6 p-6">
               {/* Current booking info */}
               <div className="bg-card rounded-[16px] p-4 border border-border">
-                <span className="text-[15px] font-semibold">{t.lessonTitle[lang]}</span>
+                <span className="text-[15px] font-semibold">{lang === "en" && editingBooking.lesson.workshop_subtitle_en ? editingBooking.lesson.workshop_subtitle_en : editingBooking.lesson.workshop_subtitle}</span>
                 <div className="flex items-center gap-1.5 mt-1">
                   <Calendar size={13} className="text-muted-foreground" />
                   <span className="text-[13px] text-muted-foreground">
@@ -548,6 +549,11 @@ export default function MyPage() {
                           <span className="text-xs text-muted-foreground">
                             {lesson.start_time.slice(0, 5)} AM
                           </span>
+                          {(lesson.workshop_subtitle || lesson.workshop_subtitle_en) && (
+                            <span className="text-xs text-foreground/70 font-medium">
+                              {lang === "en" && lesson.workshop_subtitle_en ? lesson.workshop_subtitle_en : lesson.workshop_subtitle}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {isCurrent && (
@@ -689,7 +695,7 @@ export default function MyPage() {
                   if (activeFirst.some((f, i) => f !== (origFirst[i] || false))) return false;
                   return true;
                 })()}
-                className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving && <Loader2 size={18} className="animate-spin" />}
                 {t.saveChanges[lang]}
@@ -717,8 +723,8 @@ export default function MyPage() {
               <CircleCheck size={16} className="text-white" />
             </div>
             <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-semibold text-white">メンバーになりました！</span>
-              <span className="text-xs text-white/65">Mariko Organics メンバーへようこそ</span>
+              <span className="text-sm font-semibold text-white">{lang === "ja" ? "プレミアメンバーになりました！" : "You are now a Premium Member!"}</span>
+              <span className="text-xs text-white/65">{lang === "ja" ? "Mariko Organics プレミアメンバーへようこそ" : "Welcome to Mariko Organics Premium Membership"}</span>
             </div>
           </div>
         </div>

@@ -12,6 +12,8 @@ create table lessons (
   image_url text,
   workshop_title text,
   workshop_subtitle text,
+  workshop_subtitle_en text,
+  description_en text,
   is_published boolean not null default false,
   is_member_published boolean not null default false,
   created_at timestamptz default now()

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Leaf from "lucide-react/dist/esm/icons/leaf";
 import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Link from "next/link";
 import { TabBar } from "@/components/tab-bar";
@@ -22,7 +21,9 @@ interface Lesson {
   is_published: boolean;
   is_member_published: boolean;
   workshop_subtitle: string;
+  workshop_subtitle_en?: string;
   description: string;
+  description_en?: string;
   image_url: string | null;
 }
 
@@ -79,38 +80,32 @@ export default function Home() {
     loadLessons();
     const onVisible = () => { if (document.visibilityState === "visible") loadLessons(); };
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
+    const interval = setInterval(loadLessons, 30000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(interval);
+    };
   }, [loadLessons]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 h-14">
-        <div className="flex flex-col items-center" style={{ gap: '2px' }}>
-          <span className="font-[family-name:var(--font-playfair)] text-[22px] font-black tracking-[3px] text-[#B83A2A]">
-            MARIKO
-          </span>
-          <span className="font-[family-name:var(--font-playfair)] text-[11px] font-bold tracking-[5px] text-[#B83A2A]">
-            ORGANICS
+      <header className="flex items-center justify-between px-6 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex flex-col items-center" style={{ gap: '2px' }}>
+            <span className="font-[family-name:var(--font-playfair)] text-[24px] font-black tracking-[3px] text-[#B83A2A] leading-none">
+              MARIKO
+            </span>
+            <span className="font-[family-name:var(--font-playfair)] text-[12px] font-bold tracking-[4px] text-[#B83A2A] leading-none">
+              ORGANICS
+            </span>
+          </div>
+          <span className="text-[13px] font-medium text-[#7B4B3A] tracking-wide leading-[1.3]">
+            Gluten Free Workshop
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <LanguageToggle />
-        </div>
+        <LanguageToggle />
       </header>
-
-      {/* Brand Header */}
-      <div className="flex items-center justify-center gap-3 bg-gradient-to-b from-[#E8F5E9] to-[#C8E6C9] py-5 px-6">
-        <Leaf size={24} className="text-primary" />
-        <div className="flex flex-col items-center gap-0.5">
-          <span className="text-base font-bold text-primary tracking-tight">
-            {lang === "ja" ? "グルテンフリー料理教室" : "Gluten-Free Cooking Class"}
-          </span>
-          <span className="text-xs text-primary/70">
-            {t.heroSub[lang]}
-          </span>
-        </div>
-      </div>
 
       {/* Schedule Section */}
       <section className="flex flex-col gap-4 px-6 pt-6">
@@ -128,7 +123,7 @@ export default function Home() {
               month={month}
               day={day}
               dayOfWeek={dayOfWeek}
-              title={lesson.workshop_subtitle || t.lessonTitle[lang]}
+              title={(lang === "en" && lesson.workshop_subtitle_en) ? lesson.workshop_subtitle_en : (lesson.workshop_subtitle || t.lessonTitle[lang])}
               imageUrl={lesson.image_url}
               time={formatTime(lesson.start_time, lesson.end_time)}
               seatsRemaining={lesson.seats_remaining}
@@ -151,7 +146,7 @@ export default function Home() {
       <section className="flex flex-col gap-3 px-6 pt-6">
         <h2 className="text-lg font-semibold tracking-tight">{t.announcements[lang]}</h2>
         <Link href="/membership">
-          <div className="flex items-center gap-3 bg-[#C8F0D8] rounded-[16px] p-4">
+          <div className="flex items-center gap-3 bg-card rounded-[16px] p-4 border border-border shadow-[0_2px_8px_rgba(139,111,92,0.09)]">
             <Sparkles size={20} className="text-primary shrink-0" />
             <div className="flex flex-col gap-0.5">
               <span className="text-sm font-semibold text-primary">

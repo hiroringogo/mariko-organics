@@ -1,0 +1,94 @@
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  const {
+    lessonId,
+    name,
+    email,
+    phone,
+    participantCount,
+    companions,
+    companionEmails,
+    companionFirstTime,
+    notes,
+    isFirstTime,
+    referredBy,
+  } = body;
+
+  // Validate required fields
+  if (!lessonId || !name || !email || !participantCount) {
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 }
+    );
+  }
+
+  if (typeof participantCount !== "number" || participantCount < 1 || participantCount > 6) {
+    return NextResponse.json(
+      { error: "Invalid participant count" },
+      { status: 400 }
+    );
+  }
+
+  // Server-side seats check: fetch current remaining seats
+  const { data: lesson, error: lessonError } = await supabase
+    .from("lesson_with_seats")
+    .select("seats_remaining, total_seats")
+    .eq("id", lessonId)
+    .single();
+
+  if (lessonError || !lesson) {
+    return NextResponse.json(
+      { error: "Lesson not found" },
+      { status: 404 }
+    );
+  }
+
+  if (lesson.seats_remaining <= 0) {
+    return NextResponse.json(
+      { error: "fully_booked" },
+      { status: 409 }
+    );
+  }
+
+  if (participantCount > lesson.seats_remaining) {
+    return NextResponse.json(
+      { error: "not_enough_seats", seatsRemaining: lesson.seats_remaining },
+      { status: 409 }
+    );
+  }
+
+  // Insert the booking
+  const { error: insertError } = await supabase.from("bookings").insert({
+    lesson_id: lessonId,
+    name,
+    email,
+    phone: phone ?? null,
+    participant_count: participantCount,
+    companion_names:
+      Array.isArray(companions) && companions.length > 0 ? companions : null,
+    companion_emails:
+      Array.isArray(companionEmails) && companionEmails.some(Boolean)
+        ? companionEmails
+        : null,
+    companion_first_time:
+      Array.isArray(companionFirstTime) && companionFirstTime.some(Boolean)
+        ? companionFirstTime
+        : null,
+    notes: notes ?? null,
+    is_first_time: isFirstTime ?? false,
+    referred_by: referredBy ?? null,
+  });
+
+  if (insertError) {
+    return NextResponse.json(
+      { error: insertError.message },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({ success: true });
+}

@@ -9,8 +9,6 @@ import MapPin from "lucide-react/dist/esm/icons/map-pin";
 import Users from "lucide-react/dist/esm/icons/users";
 import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
 import Clock from "lucide-react/dist/esm/icons/clock";
-import ChefHat from "lucide-react/dist/esm/icons/chef-hat";
-import UtensilsCrossed from "lucide-react/dist/esm/icons/utensils-crossed";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
@@ -36,6 +34,7 @@ interface Lesson {
   id: string;
   title: string;
   description: string;
+  description_en?: string;
   date: string;
   start_time: string;
   end_time: string;
@@ -44,6 +43,7 @@ interface Lesson {
   price: number;
   workshop_title: string;
   workshop_subtitle: string;
+  workshop_subtitle_en?: string;
   seats_remaining: number;
   image_url: string | null;
 }
@@ -53,8 +53,6 @@ export default function LessonDetailPage() {
   const router = useRouter();
   const { lang } = useLanguage();
   const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
-  const [selectedLessonId, setSelectedLessonId] = useState<string>("");
   const [participantCount, setParticipantCount] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -76,7 +74,6 @@ export default function LessonDetailPage() {
 
       if (lessonData) {
         setLesson(lessonData);
-        setSelectedLessonId(lessonData.id);
       }
 
       // Check if user already has a booking for this lesson
@@ -91,36 +88,6 @@ export default function LessonDetailPage() {
           .maybeSingle();
         if (booking) setExistingBooking(booking);
       }
-
-      // Check membership for showing member-only lessons in date picker
-      let isMember = false;
-      if (savedEmail) {
-        try {
-          const { data: member } = await supabase
-            .from("members")
-            .select("id")
-            .eq("email", savedEmail)
-            .maybeSingle();
-          isMember = !!member;
-        } catch {
-          // members table may not exist yet
-        }
-      }
-
-      const query = supabase
-        .from("lesson_with_seats")
-        .select("*")
-        .gte("date", new Date().toISOString().split("T")[0])
-        .order("date", { ascending: true });
-
-      if (isMember) {
-        query.or("is_published.eq.true,is_member_published.eq.true");
-      } else {
-        query.eq("is_published", true);
-      }
-
-      const { data: allData } = await query;
-      if (allData) setAllLessons(allData);
     }
     fetchData();
   }, [params.id]);
@@ -140,11 +107,12 @@ export default function LessonDetailPage() {
     );
   }
 
-  const selectedLesson = allLessons.find((l) => l.id === selectedLessonId) || lesson;
-  const maxParticipants = Math.min(selectedLesson.seats_remaining, 6);
+  const maxParticipants = Math.min(lesson.seats_remaining, 6);
 
   function handleSubmit() {
-    if (!name || !email) return;
+    if (!lesson || !name || !email) return;
+    // Guard: block submission if lesson is fully booked
+    if (lesson.seats_remaining <= 0) return;
     if (isFirstTime && !referredBy.trim()) return;
     // All companion names are required when participantCount > 1
     if (participantCount > 1) {
@@ -154,7 +122,7 @@ export default function LessonDetailPage() {
 
     // Save booking data to sessionStorage for the confirmation page
     const bookingData = {
-      lessonId: selectedLessonId,
+      lessonId: lesson.id,
       name,
       email,
       phone: null,
@@ -171,39 +139,22 @@ export default function LessonDetailPage() {
       notes: notes || null,
       isFirstTime,
       referredBy: isFirstTime ? referredBy.trim() : null,
-      lessonDate: selectedLesson.date,
-      lessonStartTime: selectedLesson.start_time,
-      lessonEndTime: selectedLesson.end_time,
-      lessonTitle: selectedLesson.workshop_subtitle,
-      lessonPrice: selectedLesson.price,
-      totalSeats: selectedLesson.total_seats,
-      minSeats: selectedLesson.min_seats,
+      lessonDate: lesson.date,
+      lessonStartTime: lesson.start_time,
+      lessonEndTime: lesson.end_time,
+      lessonTitle: lang === "en" && lesson.workshop_subtitle_en ? lesson.workshop_subtitle_en : lesson.workshop_subtitle,
+      lessonPrice: lesson.price,
+      totalSeats: lesson.total_seats,
+      minSeats: lesson.min_seats,
     };
 
-    sessionStorage.setItem(`booking_${selectedLessonId}`, JSON.stringify(bookingData));
+    sessionStorage.setItem(`booking_${lesson.id}`, JSON.stringify(bookingData));
 
     localStorage.setItem("mariko_name", name);
     localStorage.setItem("mariko_email", email);
 
-    router.push(`/lessons/${selectedLessonId}/confirm`);
+    router.push(`/lessons/${lesson.id}/confirm`);
   }
-
-  const lessonContents = [
-    {
-      icon: ChefHat,
-      title: t.content1Title[lang],
-      subtitle: t.content1Sub[lang],
-      bg: "bg-[#C8F0D8]",
-      iconColor: "text-primary",
-    },
-    {
-      icon: UtensilsCrossed,
-      title: t.content2Title[lang],
-      subtitle: t.content2Sub[lang],
-      bg: "bg-[#FFF3E0]",
-      iconColor: "text-[#D4A64A]",
-    },
-  ];
 
   const capacityText = lang === "ja"
     ? `定員 ${lesson.total_seats}名（最少催行人数 ${lesson.min_seats}名）`
@@ -232,17 +183,17 @@ export default function LessonDetailPage() {
         <div className="flex flex-col gap-5 p-6">
           {/* Tag + Title */}
           <div className="flex flex-col gap-2">
-            <span className="inline-flex items-center gap-1.5 bg-[#C8F0D8] text-primary text-xs font-semibold rounded-full px-3 py-1 w-fit">
+            <span className="inline-flex items-center gap-1.5 bg-[#F5EBE0] text-primary text-xs font-semibold rounded-full px-3 py-1 w-fit">
               <Leaf size={14} />
               {lesson.workshop_title}
             </span>
             <h1 className="text-[22px] font-bold tracking-tight">
-              {lesson.workshop_subtitle}
+              {lang === "en" && lesson.workshop_subtitle_en ? lesson.workshop_subtitle_en : lesson.workshop_subtitle}
             </h1>
           </div>
 
           {/* Booked Date */}
-          <div className="flex items-center justify-between rounded-xl px-4 py-3.5 bg-[#F0FBF4] border-2 border-[#C8F0D8]">
+          <div className="flex items-center justify-between rounded-xl px-4 py-3.5 bg-[#FAF3ED] border-2 border-[#E8D5C4]">
             <div className="flex items-center gap-2">
               <CalendarCheck size={18} className="text-primary" />
               <span className="text-sm font-semibold">
@@ -253,7 +204,7 @@ export default function LessonDetailPage() {
           </div>
 
           {/* Confirmed Banner */}
-          <div className="flex items-center gap-3 bg-[#C8F0D8] rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-[#F5EBE0] rounded-xl px-4 py-3">
             <CheckCircle size={20} className="text-primary shrink-0" />
             <span className="text-sm font-semibold text-primary">
               {lang === "ja" ? "予約済み" : "Booking Confirmed"}
@@ -307,7 +258,7 @@ export default function LessonDetailPage() {
           {/* Back Button */}
           <Link
             href="/mypage"
-            className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold flex items-center justify-center"
+            className="w-full h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold flex items-center justify-center"
           >
             {lang === "ja" ? "マイページに戻る" : "Back to My Page"}
           </Link>
@@ -332,45 +283,31 @@ export default function LessonDetailPage() {
       </header>
 
       {/* Hero Image */}
-      <div className="h-[220px] bg-muted overflow-hidden relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={lesson.image_url || "/images/hero.jpg?v=2"}
-          alt={lesson.workshop_subtitle}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </div>
+      {lesson.image_url && (
+        <div className="h-[220px] bg-muted overflow-hidden relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lesson.image_url}
+            alt={lesson.workshop_subtitle}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex flex-col gap-5 p-6">
         {/* Tag + Title */}
         <div className="flex flex-col gap-3">
-          <span className="inline-flex items-center gap-1.5 bg-[#C8F0D8] text-primary text-xs font-semibold rounded-full px-3 py-1 w-fit">
+          <span className="inline-flex items-center gap-1.5 bg-[#F5EBE0] text-primary text-xs font-semibold rounded-full px-3 py-1 w-fit">
             <Leaf size={14} />
             {lesson.workshop_title}
           </span>
           <h1 className="text-[26px] font-bold tracking-tight">
-            {t.lessonTitle[lang]}
+            {lang === "en" && lesson.workshop_subtitle_en ? lesson.workshop_subtitle_en : lesson.workshop_subtitle}
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {lesson.description}
+            {lang === "en" && lesson.description_en ? lesson.description_en : lesson.description}
           </p>
-        </div>
-
-        {/* Lesson Contents */}
-        <div className="flex flex-col gap-3.5">
-          <h2 className="text-base font-semibold">{t.lessonContentsTitle[lang]}</h2>
-          {lessonContents.map((item, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className={`${item.bg} w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0`}>
-                <item.icon size={18} className={item.iconColor} />
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{item.title}</span>
-                <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-              </div>
-            </div>
-          ))}
         </div>
 
         <hr className="border-border" />
@@ -397,184 +334,170 @@ export default function LessonDetailPage() {
 
         <hr className="border-border" />
 
-        {/* Date Selection */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">{t.selectDate[lang]}</h2>
-          <div className="flex flex-col gap-2">
-            {allLessons.map((l) => {
-              const isSelected = selectedLessonId === l.id;
-              const isFull = l.seats_remaining <= 0;
-              const seatsText = lang === "ja"
-                ? (isFull ? "満席" : `残り${l.seats_remaining}席`)
-                : (isFull ? "Full" : `${l.seats_remaining} left`);
-              return (
-                <button
-                  key={l.id}
-                  onClick={() => !isFull && setSelectedLessonId(l.id)}
-                  disabled={isFull}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-left transition-colors ${
-                    isSelected
-                      ? "bg-card border-2 border-primary"
-                      : isFull
-                        ? "bg-secondary/50 border border-border opacity-60"
-                        : "bg-card border border-border"
-                  }`}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span className={`text-sm font-semibold ${isFull ? "text-muted-foreground" : ""}`}>
-                      {formatDateFull(l.date, lang)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {l.start_time.slice(0, 5)} AM
-                    </span>
-                  </div>
-                  <span className={`text-xs font-medium ${
-                    isFull ? "text-destructive" : l.seats_remaining <= 2 ? "text-terracotta" : "text-muted-foreground"
-                  }`}>
-                    {seatsText}
-                  </span>
-                </button>
-              );
-            })}
+        {/* Selected Date */}
+        <div className="flex items-center justify-between rounded-xl px-4 py-3.5 bg-[#FAF3ED] border-2 border-[#E8D5C4]">
+          <div className="flex items-center gap-2">
+            <CalendarCheck size={18} className="text-primary" />
+            <span className="text-sm font-semibold">
+              {formatDateFull(lesson.date, lang)}  {lesson.start_time.slice(0, 5)} AM
+            </span>
           </div>
+          <span className={`text-xs font-semibold ${
+            lesson.seats_remaining <= 0
+              ? "text-red-600"
+              : lesson.seats_remaining <= 2
+              ? "text-terracotta"
+              : "text-primary"
+          }`}>
+            {lesson.seats_remaining <= 0
+              ? (lang === "ja" ? "満席" : "Fully Booked")
+              : (lang === "ja" ? `残り${lesson.seats_remaining}席` : `${lesson.seats_remaining} left`)}
+          </span>
         </div>
 
         <hr className="border-border" />
 
-        {/* Booking Form */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold">{t.customerInfo[lang]}</h2>
+        {lesson.seats_remaining > 0 && (
+          <>
+            {/* Booking Form */}
+            <div className="flex flex-col gap-3">
+              <h2 className="text-base font-semibold">{t.customerInfo[lang]}</h2>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">{t.nameLabel[lang]} <span className="text-destructive">*</span></label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder[lang]}
-              className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">{t.emailLabel[lang]} <span className="text-destructive">*</span></label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder[lang]}
-              className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
-          </div>
-
-          {/* First-time checkbox */}
-          <div className="bg-secondary/50 border border-border rounded-xl p-3 flex flex-col gap-2">
-            <label className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isFirstTime}
-                onChange={(e) => setIsFirstTime(e.target.checked)}
-                className="w-5 h-5 rounded border-input accent-primary"
-              />
-              <span className="text-sm font-medium">
-                {lang === "ja" ? "初めて参加します" : "This is my first lesson"}
-              </span>
-            </label>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
-              {lang === "ja"
-                ? "初めての方には事前にご自宅の住所等をメールでお伝えします"
-                : "First-time guests will receive venue details via email"}
-            </p>
-            {isFirstTime && (
-              <div className="flex flex-col gap-1.5 pt-1">
-                <label className="text-sm font-medium">{t.referredByLabel[lang]} <span className="text-destructive">*</span></label>
-                <input type="text" value={referredBy} onChange={(e) => setReferredBy(e.target.value)} placeholder={t.referredByPlaceholder[lang]}
-                  className="h-10 rounded-full bg-card px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.nameLabel[lang]} <span className="text-destructive">*</span></label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t.namePlaceholder[lang]}
+                  className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
               </div>
-            )}
-          </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">{t.participantCount[lang]}</label>
-            <div className="flex gap-2">
-              {Array.from({ length: maxParticipants }, (_, i) => i + 1).map((n) => (
-                <button key={n} onClick={() => {
-                  setParticipantCount(n);
-                  if (n === 1) {
-                    setCompanions(["", ""]);
-                    setCompanionEmails(["", ""]);
-                    setCompanionFirstTime([false, false]);
-                  }
-                }}
-                  className={`h-10 flex-1 rounded-full text-sm font-medium transition-colors ${
-                    participantCount === n ? "bg-primary text-primary-foreground" : "bg-accent border border-input text-foreground"
-                  }`}>
-                  {lang === "ja" ? `${n}名` : n}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {participantCount > 1 && (
-            <div className="flex flex-col gap-3 bg-secondary/50 border border-border rounded-xl p-4">
-              <div className="flex items-center gap-2">
-                <UserPlus size={14} className="text-primary" />
-                <span className="text-sm font-medium">{t.companionNames[lang]}</span>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.emailLabel[lang]} <span className="text-destructive">*</span></label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder[lang]}
+                  className="h-10 rounded-full bg-accent px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
               </div>
-              {Array.from({ length: participantCount - 1 }, (_, i) => i).map((i) => (
-                <div key={i} className="flex flex-col gap-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-medium">
-                      {lang === "ja" ? `${i + 1}人目` : `Companion ${i + 1}`}
-                    </span>
+
+              {/* First-time checkbox */}
+              <div className="bg-secondary/50 border border-border rounded-xl p-3 flex flex-col gap-2">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isFirstTime}
+                    onChange={(e) => setIsFirstTime(e.target.checked)}
+                    className="w-5 h-5 rounded border-input accent-cta"
+                  />
+                  <span className="text-sm font-medium">
+                    {lang === "ja" ? "初めて参加します" : "This is my first lesson"}
+                  </span>
+                </label>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {lang === "ja"
+                    ? "初めての方には事前にご自宅の住所等をメールでお伝えします"
+                    : "First-time guests will receive venue details via email"}
+                </p>
+                {isFirstTime && (
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <label className="text-sm font-medium">{t.referredByLabel[lang]} <span className="text-destructive">*</span></label>
+                    <input type="text" value={referredBy} onChange={(e) => setReferredBy(e.target.value)} placeholder={t.referredByPlaceholder[lang]}
+                      className="h-10 rounded-full bg-card px-4 text-sm border border-input outline-none focus:border-primary transition-colors" />
                   </div>
-                  <input type="text" value={companions[i]} required
-                    onChange={(e) => { const next = [...companions]; next[i] = e.target.value; setCompanions(next); }}
-                    placeholder={lang === "ja" ? `お名前（必須）` : `Name (required)`}
-                    className={`h-10 rounded-full bg-card px-3.5 text-sm border outline-none focus:border-primary transition-colors ${
-                      !companions[i]?.trim() ? "border-destructive/50" : "border-input"
-                    }`} />
-                  <input type="email" value={companionEmails[i] || ""}
-                    onChange={(e) => { const next = [...companionEmails]; next[i] = e.target.value; setCompanionEmails(next); }}
-                    placeholder={lang === "ja" ? "メール（任意）" : "Email (optional)"}
-                    className="h-9 rounded-full bg-card px-3.5 text-xs border border-input/60 outline-none focus:border-primary transition-colors" />
-                  <label className="flex items-center gap-2 cursor-pointer mt-0.5">
-                    <input
-                      type="checkbox"
-                      checked={companionFirstTime[i] || false}
-                      onChange={() => {
-                        const next = [...companionFirstTime];
-                        next[i] = !next[i];
-                        setCompanionFirstTime(next);
-                      }}
-                      className="w-4 h-4 rounded border-input accent-primary"
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {lang === "ja" ? "初めて参加します" : "First time attending"}
-                    </span>
-                  </label>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.participantCount[lang]}</label>
+                <div className="flex gap-2">
+                  {Array.from({ length: maxParticipants }, (_, i) => i + 1).map((n) => (
+                    <button key={n} onClick={() => {
+                      setParticipantCount(n);
+                      if (n === 1) {
+                        setCompanions(["", ""]);
+                        setCompanionEmails(["", ""]);
+                        setCompanionFirstTime([false, false]);
+                      }
+                    }}
+                      className={`h-10 flex-1 rounded-full text-sm font-medium transition-colors ${
+                        participantCount === n ? "bg-primary text-primary-foreground" : "bg-accent border border-input text-foreground"
+                      }`}>
+                      {lang === "ja" ? `${n}名` : n}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              <p className="text-[11px] text-muted-foreground">
-                {lang === "ja"
-                  ? "ご記入いただくと同伴者にも確認メールをお送りします"
-                  : "Enter email to send booking confirmation to companions"}
+              </div>
+
+              {participantCount > 1 && (
+                <div className="flex flex-col gap-3 bg-secondary/50 border border-border rounded-xl p-4">
+                  <div className="flex items-center gap-2">
+                    <UserPlus size={14} className="text-primary" />
+                    <span className="text-sm font-medium">{t.companionNames[lang]}</span>
+                  </div>
+                  {Array.from({ length: participantCount - 1 }, (_, i) => i).map((i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold flex items-center justify-center shrink-0">
+                            {i + 1}
+                          </span>
+                          <input type="text" value={companions[i]} required
+                            onChange={(e) => { const next = [...companions]; next[i] = e.target.value; setCompanions(next); }}
+                            placeholder={lang === "ja" ? `お名前（必須）` : `Name (required)`}
+                            className={`h-9 rounded-full bg-card px-3.5 text-sm border outline-none focus:border-primary transition-colors flex-1 ${
+                              !companions[i]?.trim() ? "border-destructive/50" : "border-input"
+                            }`} />
+                        </div>
+                        <label className="flex items-center gap-1.5 cursor-pointer shrink-0 ml-2">
+                          <input
+                            type="checkbox"
+                            checked={companionFirstTime[i] || false}
+                            onChange={() => {
+                              const next = [...companionFirstTime];
+                              next[i] = !next[i];
+                              setCompanionFirstTime(next);
+                            }}
+                            className="w-3.5 h-3.5 rounded border-input accent-cta"
+                          />
+                          <span className="text-[11px] text-muted-foreground">
+                            {lang === "ja" ? "初めて参加します" : "First time"}
+                          </span>
+                        </label>
+                      </div>
+                      <input type="email" value={companionEmails[i] || ""}
+                        onChange={(e) => { const next = [...companionEmails]; next[i] = e.target.value; setCompanionEmails(next); }}
+                        placeholder={lang === "ja" ? "メール（任意）" : "Email (optional)"}
+                        className="h-9 rounded-full bg-card px-3.5 text-xs border border-input/60 outline-none focus:border-primary transition-colors ml-7" />
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-muted-foreground">
+                    {lang === "ja"
+                      ? "ご記入いただくと同伴者にも確認メールをお送りします"
+                      : "Enter email to send booking confirmation to companions"}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium">{t.notesLabel[lang]}</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.notesPlaceholder[lang]} rows={3}
+                  className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none" />
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-col gap-2 py-1">
+              <button
+                onClick={handleSubmit}
+                disabled={!name || !email || (isFirstTime && !referredBy.trim()) || (participantCount > 1 && companions.slice(0, participantCount - 1).some((n) => !n.trim()))}
+                className="w-full h-12 rounded-full bg-cta text-cta-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {bookButtonText}
+              </button>
+              <p className="text-xs text-muted-foreground text-center">
+                {t.noRegistration[lang]}
               </p>
             </div>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">{t.notesLabel[lang]}</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t.notesPlaceholder[lang]} rows={3}
-              className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none" />
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="flex flex-col gap-2 py-1">
-          <button
-            onClick={handleSubmit}
-            disabled={!name || !email || (isFirstTime && !referredBy.trim()) || (participantCount > 1 && companions.slice(0, participantCount - 1).some((n) => !n.trim()))}
-            className="w-full h-12 rounded-full bg-primary text-primary-foreground text-base font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {bookButtonText}
-          </button>
-          <p className="text-xs text-muted-foreground text-center">
-            {t.noRegistration[lang]}
-          </p>
-        </div>
+          </>
+        )}
 
       </div>
+
     </div>
   );
 }
