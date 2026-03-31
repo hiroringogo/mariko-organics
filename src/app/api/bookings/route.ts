@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server"; 
-  import { supabase } from "@/lib/supabase";  
-                                              
+import { NextResponse } from "next/server";                                                   
+  import { supabase } from "@/lib/supabase";                                                    
+                                                                                                
   export async function POST(request: Request) {                                                
     const body = await request.json();                                                          
                                                                                                 
@@ -11,19 +11,18 @@ import { NextResponse } from "next/server";
       phone,                                                                                    
       participantCount,                                                                         
       companions,                                                                               
-      companionEmails,                    
+      companionEmails,                                                                          
       companionFirstTime,                                                                       
       notes,                                                                                    
       isFirstTime,                                                                              
       referredBy,                                                                               
     } = body;                                                                                   
                                                                                                 
-    // Validate required fields                                                                 
     if (!lessonId || !name || !email || !participantCount) {                                    
       return NextResponse.json(                                                                 
         { error: "Missing required fields" },                                                   
         { status: 400 }                                                                         
-      );                                                                                        
+      );                                      
     }                                                                                           
                                                                                                 
     if (typeof participantCount !== "number" || participantCount < 1 || participantCount > 6) { 
@@ -33,12 +32,11 @@ import { NextResponse } from "next/server";
       );                                      
     }                                                                                           
                                                                                                 
-    // Server-side seats check: fetch current remaining seats                                   
     const { data: lesson, error: lessonError } = await supabase                                 
       .from("lesson_with_seats")                                                                
-      .select("seats_remaining, total_seats, title, date, start_time")                          
-      .eq("id", lessonId)                     
-      .single();                                                                                
+      .select("seats_remaining, total_seats")                                                   
+      .eq("id", lessonId)                                                                       
+      .single();                              
                                                                                                 
     if (lessonError || !lesson) {                                                               
       return NextResponse.json(                                                                 
@@ -61,16 +59,15 @@ import { NextResponse } from "next/server";
       );                                                                                        
     }                                                                                           
                                                                                                 
-    // Insert the booking                                                                       
     const { error: insertError } = await supabase.from("bookings").insert({                     
       lesson_id: lessonId,                                                                      
       name,                                                                                     
-      email,                                  
+      email,                                                                                    
       phone: phone ?? null,                                                                     
       participant_count: participantCount,                                                      
-      companion_names:                                                                          
+      companion_names:                        
         Array.isArray(companions) && companions.length > 0 ? companions : null,                 
-      companion_emails:                                                                         
+      companion_emails:                       
         Array.isArray(companionEmails) && companionEmails.some(Boolean)                         
           ? companionEmails                                                                     
           : null,                                                                               
@@ -90,26 +87,5 @@ import { NextResponse } from "next/server";
       );                                                                                        
     }                                                                                           
                                                                                                 
-    // Send confirmation email                                                                  
-    try {                                                                                       
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://ca.authenticknt.com";        
-      await fetch(`${siteUrl}/api/send-email`, {                                                
-        method: "POST",                                                                         
-        headers: { "Content-Type": "application/json" },                                        
-        body: JSON.stringify({                                                                  
-          type: isFirstTime ? "lesson_booking_first" : "lesson_booking",                        
-          email,                                                                                
-          name,                                                                                 
-          lessonTitle: lesson.title,                                                            
-          lessonDate: lesson.date,                                                              
-          lessonTime: lesson.start_time,                                                        
-          participantCount,                                                                     
-          companionNames: companions ?? [],                                                     
-        }),                                                                                     
-      });                                                                                       
-    } catch (e) {                                                                               
-      console.error("Email send failed:", e);                                                   
-    }                                                                                           
-                                                                                                
     return NextResponse.json({ success: true });                                                
-  } 
+  }                                     
