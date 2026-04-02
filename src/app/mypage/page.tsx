@@ -67,6 +67,7 @@ export default function MyPage() {
       .from("bookings")
       .select("*, lesson:lessons(*)")
       .eq("email", email)
+      .eq("status", "confirmed")
       .order("created_at", { ascending: false });
 
     if (data) setBookings(data);
@@ -108,6 +109,7 @@ export default function MyPage() {
       .from("bookings")
       .select("*, lesson:lessons(*)")
       .eq("email", emailInput)
+      .eq("status", "confirmed")
       .order("created_at", { ascending: false });
 
     if (data && data.length > 0) {

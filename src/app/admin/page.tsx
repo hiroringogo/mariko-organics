@@ -264,10 +264,10 @@ export default function AdminPage() {
 
   useEffect(() => { if (authed) { fetchData(); fetchSettings(); fetchEmailTemplates(); fetchMembers(); } }, [authed, fetchData, fetchSettings, fetchEmailTemplates, fetchMembers]);
 
-  // Auto-refresh booking data every 30 seconds
+  // Auto-refresh booking data every 5 seconds
   useEffect(() => {
     if (!authed) return;
-    const interval = setInterval(() => { fetchData(); }, 30000);
+    const interval = setInterval(() => { fetchData(); }, 5000);
     return () => clearInterval(interval);
   }, [authed, fetchData]);
 
