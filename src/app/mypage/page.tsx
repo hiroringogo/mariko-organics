@@ -143,6 +143,9 @@ export default function MyPage() {
         return;
       }
 
+      // Immediately remove from UI
+      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+
       // Send cancellation email
       if (booking) {
         await fetch("/api/send-email", {
@@ -157,16 +160,16 @@ export default function MyPage() {
         }).catch(() => {});
       }
 
-      // Refresh data from server - use booking email as fallback
-      const emailToFetch = userEmail || booking?.email;
-      if (emailToFetch) {
-        await fetchBookings(emailToFetch);
-        setSuccessMessage("レッスンをキャンセルしました");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        console.error("No email available to refresh bookings");
-        alert("データ更新に失敗しました");
-      }
+      // Refresh data from server after a slight delay to ensure DB sync
+      setTimeout(async () => {
+        const emailToFetch = userEmail || booking?.email;
+        if (emailToFetch) {
+          await fetchBookings(emailToFetch);
+        }
+      }, 500);
+
+      setSuccessMessage("レッスンをキャンセルしました");
+      setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err) {
       console.error("Cancel exception:", err);
       alert("エラーが発生しました: " + String(err));
