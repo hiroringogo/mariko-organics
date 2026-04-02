@@ -333,23 +333,41 @@ export default function AdminPage() {
     bookings.reduce((sum, b) => sum + b.participant_count, 0);
 
   async function handleAdd(data: LessonFormData) {
-    const { error } = await supabase.from("lessons").insert(data);
-    if (error) {
-      alert("レッスンの追加に失敗しました: " + error.message);
-      return;
+    try {
+      const res = await fetch("/api/lessons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("レッスンの追加に失敗しました: " + err.error);
+        return;
+      }
+      setFormMode({ type: "closed" });
+      await fetchData();
+    } catch (err) {
+      alert("レッスンの追加に失敗しました: " + String(err));
     }
-    setFormMode({ type: "closed" });
-    await fetchData();
   }
 
   async function handleAddMultiple(dataList: LessonFormData[]) {
-    const { error } = await supabase.from("lessons").insert(dataList);
-    if (error) {
-      alert("レッスンの追加に失敗しました: " + error.message);
-      return;
+    try {
+      const res = await fetch("/api/lessons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataList),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("レッスンの追加に失敗しました: " + err.error);
+        return;
+      }
+      setFormMode({ type: "closed" });
+      await fetchData();
+    } catch (err) {
+      alert("レッスンの追加に失敗しました: " + String(err));
     }
-    setFormMode({ type: "closed" });
-    await fetchData();
   }
 
   async function handleEdit(data: LessonFormData) {
@@ -361,47 +379,75 @@ export default function AdminPage() {
       (l) => l.id !== editingLesson.id && l.workshop_subtitle === editingLesson.workshop_subtitle && editingLesson.workshop_subtitle
     );
 
-    // Update the current lesson
-    const { error } = await supabase.from("lessons").update(data).eq("id", editingLesson.id);
-    if (error) {
-      alert("レッスンの更新に失敗しました: " + error.message);
-      return;
-    }
+    try {
+      // Update the current lesson
+      const res = await fetch("/api/lessons", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingLesson.id, ...data }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("レッスンの更新に失敗しました: " + err.error);
+        return;
+      }
 
-    // If siblings exist, batch-update shared content (NOT publish settings — those stay per-lesson)
-    if (siblings.length > 0) {
-      const sharedUpdate: Record<string, unknown> = {};
-      if (data.image_url !== editingLesson.image_url) sharedUpdate.image_url = data.image_url;
-      if (data.workshop_subtitle !== editingLesson.workshop_subtitle) sharedUpdate.workshop_subtitle = data.workshop_subtitle;
-      if (data.description !== editingLesson.description) sharedUpdate.description = data.description;
-      if (data.workshop_title !== editingLesson.workshop_title) sharedUpdate.workshop_title = data.workshop_title;
-      if (data.price !== editingLesson.price) sharedUpdate.price = data.price;
-      if (data.start_time !== editingLesson.start_time) sharedUpdate.start_time = data.start_time;
-      if (data.end_time !== editingLesson.end_time) sharedUpdate.end_time = data.end_time;
-      if (data.total_seats !== editingLesson.total_seats) sharedUpdate.total_seats = data.total_seats;
-      if (data.min_seats !== editingLesson.min_seats) sharedUpdate.min_seats = data.min_seats;
-      // Note: is_published and is_member_published are intentionally excluded — publish settings are per-lesson
+      // If siblings exist, batch-update shared content (NOT publish settings — those stay per-lesson)
+      if (siblings.length > 0) {
+        const sharedUpdate: Record<string, unknown> = {};
+        if (data.image_url !== editingLesson.image_url) sharedUpdate.image_url = data.image_url;
+        if (data.workshop_subtitle !== editingLesson.workshop_subtitle) sharedUpdate.workshop_subtitle = data.workshop_subtitle;
+        if (data.description !== editingLesson.description) sharedUpdate.description = data.description;
+        if (data.workshop_title !== editingLesson.workshop_title) sharedUpdate.workshop_title = data.workshop_title;
+        if (data.price !== editingLesson.price) sharedUpdate.price = data.price;
+        if (data.start_time !== editingLesson.start_time) sharedUpdate.start_time = data.start_time;
+        if (data.end_time !== editingLesson.end_time) sharedUpdate.end_time = data.end_time;
+        if (data.total_seats !== editingLesson.total_seats) sharedUpdate.total_seats = data.total_seats;
+        if (data.min_seats !== editingLesson.min_seats) sharedUpdate.min_seats = data.min_seats;
+        // Note: is_published and is_member_published are intentionally excluded — publish settings are per-lesson
 
-      if (Object.keys(sharedUpdate).length > 0) {
-        const siblingIds = siblings.map((s) => s.id);
-        const applyToAll = confirm(
-          `同じ「${editingLesson.workshop_subtitle}」のレッスンが他に${siblings.length}件あります。\n写真・説明文などの共通内容を全レッスンに適用しますか？\n（公開設定はこのレッスンのみ変更されます）`
-        );
-        if (applyToAll) {
-          await supabase.from("lessons").update(sharedUpdate).in("id", siblingIds);
+        if (Object.keys(sharedUpdate).length > 0) {
+          const siblingIds = siblings.map((s) => s.id);
+          const applyToAll = confirm(
+            `同じ「${editingLesson.workshop_subtitle}」のレッスンが他に${siblings.length}件あります。\n写真・説明文などの共通内容を全レッスンに適用しますか？\n（公開設定はこのレッスンのみ変更されます）`
+          );
+          if (applyToAll) {
+            for (const siblingId of siblingIds) {
+              await fetch("/api/lessons", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: siblingId, ...sharedUpdate }),
+              });
+            }
+          }
         }
       }
-    }
 
-    setFormMode({ type: "closed" });
-    await fetchData();
+      setFormMode({ type: "closed" });
+      await fetchData();
+    } catch (err) {
+      alert("レッスンの更新に失敗しました: " + String(err));
+    }
   }
 
   async function handleDelete(lessonId: string) {
-    await supabase.from("lessons").delete().eq("id", lessonId);
-    setConfirmDelete(null);
-    setExpandedLesson(null);
-    await fetchData();
+    try {
+      const res = await fetch("/api/lessons", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: lessonId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("削除に失敗しました: " + err.error);
+        return;
+      }
+      setConfirmDelete(null);
+      setExpandedLesson(null);
+      await fetchData();
+    } catch (err) {
+      alert("削除に失敗しました: " + String(err));
+    }
   }
 
   async function handleCancelBooking(booking: Booking, lessonDate: string) {
@@ -427,13 +473,21 @@ export default function AdminPage() {
       update.is_member_published = true;
     }
     optimisticUpdateLesson(lessonId, update);
-    supabase.from("lessons").update(update).eq("id", lessonId).then(() => fetchData());
+    fetch("/api/lessons", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lessonId, ...update }),
+    }).then(() => fetchData()).catch(() => {});
   }
 
   async function handleDowngradeToMemberOnly(lessonId: string) {
     const update = { is_published: false, is_member_published: true };
     optimisticUpdateLesson(lessonId, update);
-    supabase.from("lessons").update(update).eq("id", lessonId).then(() => fetchData());
+    fetch("/api/lessons", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lessonId, ...update }),
+    }).then(() => fetchData()).catch(() => {});
   }
 
   // CSV Export
