@@ -1,8 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-// Create service role client within each request handler
+// Cache the Supabase client at module level for better performance
+let supabaseAdminClient: ReturnType<typeof createClient> | null = null;
+
 function getSupabaseAdminClient() {
+  // Return cached client if already initialized
+  if (supabaseAdminClient) {
+    return supabaseAdminClient;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -12,7 +19,9 @@ function getSupabaseAdminClient() {
     );
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey);
+  // Create and cache the client
+  supabaseAdminClient = createClient(supabaseUrl, supabaseServiceKey);
+  return supabaseAdminClient;
 }
 
 export async function POST(request: Request) {
