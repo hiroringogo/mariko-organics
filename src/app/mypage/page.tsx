@@ -129,12 +129,20 @@ export default function MyPage() {
   async function handleCancel(bookingId: string) {
     setCancelling(bookingId);
     const booking = bookings.find((b) => b.id === bookingId);
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "cancelled" })
-      .eq("id", bookingId);
 
-    if (!error) {
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "cancelled" })
+        .eq("id", bookingId);
+
+      if (error) {
+        console.error("Cancel error:", error);
+        alert("キャンセルに失敗しました: " + error.message);
+        setCancelling(null);
+        return;
+      }
+
       // Send cancellation email
       if (booking) {
         await fetch("/api/send-email", {
@@ -148,12 +156,23 @@ export default function MyPage() {
           }),
         }).catch(() => {});
       }
-      // Refresh data from server to ensure consistency
-      if (userEmail) {
-        await fetchBookings(userEmail);
+
+      // Refresh data from server - use booking email as fallback
+      const emailToFetch = userEmail || booking?.email;
+      if (emailToFetch) {
+        await fetchBookings(emailToFetch);
+        setSuccessMessage("レッスンをキャンセルしました");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        console.error("No email available to refresh bookings");
+        alert("データ更新に失敗しました");
       }
+    } catch (err) {
+      console.error("Cancel exception:", err);
+      alert("エラーが発生しました: " + String(err));
+    } finally {
+      setCancelling(null);
     }
-    setCancelling(null);
   }
 
   async function handleEdit(booking: Booking) {
