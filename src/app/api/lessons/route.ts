@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 // Cache the Supabase client at module level for better performance
-let supabaseAdminClient: ReturnType<typeof createClient> | null = null;
+let supabaseAdminClient: any = null;
 
 function getSupabaseAdminClient() {
   // Return cached client if already initialized
@@ -56,12 +56,12 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const supabaseAdmin = getSupabaseAdminClient();
-    const body = await request.json() as any;
+    const body = await request.json();
     const { id, ...updates } = body;
 
     console.log("PUT /api/lessons called for id:", id);
 
-    const { data, error } = await supabaseAdmin
+    const { data, error }: any = await supabaseAdmin
       .from("lessons")
       .update(updates)
       .eq("id", id)
@@ -92,7 +92,7 @@ export async function DELETE(request: Request) {
 
     console.log("DELETE /api/lessons called for id:", id);
 
-    const { data, error } = await supabaseAdmin
+    const { data, error }: any = await supabaseAdmin
       .from("lessons")
       .delete()
       .eq("id", id)
