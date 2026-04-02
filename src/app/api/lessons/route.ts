@@ -56,14 +56,14 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const supabaseAdmin = getSupabaseAdminClient();
-    const body = await request.json();
-    const { id, ...updates } = body as { id: string; [key: string]: unknown };
+    const body = await request.json() as any;
+    const { id, ...updates } = body;
 
     console.log("PUT /api/lessons called for id:", id);
 
     const { data, error } = await supabaseAdmin
       .from("lessons")
-      .update(updates as Record<string, unknown>)
+      .update(updates)
       .eq("id", id)
       .select();
 
