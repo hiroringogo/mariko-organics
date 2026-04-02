@@ -148,10 +148,10 @@ export default function MyPage() {
           }),
         }).catch(() => {});
       }
-      // Remove cancelled booking from display
-      setBookings((prev) =>
-        prev.filter((b) => b.id !== bookingId)
-      );
+      // Refresh data from server to ensure consistency
+      if (userEmail) {
+        await fetchBookings(userEmail);
+      }
     }
     setCancelling(null);
   }
