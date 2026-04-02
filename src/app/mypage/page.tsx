@@ -148,8 +148,9 @@ export default function MyPage() {
           }),
         }).catch(() => {});
       }
+      // Remove cancelled booking from display
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b))
+        prev.filter((b) => b.id !== bookingId)
       );
     }
     setCancelling(null);
