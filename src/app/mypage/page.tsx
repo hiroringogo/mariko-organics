@@ -242,12 +242,13 @@ export default function MyPage() {
       return;
     }
 
-    const { error } = await supabase
-      .from("bookings")
-      .update(updates)
-      .eq("id", editingBooking.id);
+    const res = await fetch("/api/bookings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId: editingBooking.id, updates }),
+    });
 
-    if (!error) {
+    if (res.ok) {
       // Send admin notification (fire and forget, no template needed)
       const selectedLesson = availableLessons.find((l) => l.id === editLessonId);
       fetch("/api/send-email", {

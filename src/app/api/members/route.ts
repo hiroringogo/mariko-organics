@@ -1,6 +1,16 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
+
+function getSupabaseAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Missing Supabase environment variables");
+  }
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 // GET: List all members (admin only)
 export async function GET() {
@@ -40,7 +50,7 @@ export async function PUT(request: Request) {
     .eq("id", id)
     .single();
 
-  const { error } = await supabase
+  const { error } = await getSupabaseAdminClient()
     .from("members")
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
     .eq("id", id);
@@ -82,7 +92,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Missing member ID" }, { status: 400 });
   }
 
-  const { error } = await supabase.from("members").delete().eq("id", id);
+  const { error } = await getSupabaseAdminClient().from("members").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

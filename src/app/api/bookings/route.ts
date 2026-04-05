@@ -100,6 +100,30 @@ function getSupabaseAdminClient() {
     return NextResponse.json({ success: true });
   }
 
+export async function PUT(request: Request) {
+  try {
+    const supabaseAdmin = getSupabaseAdminClient();
+    const { bookingId, updates } = await request.json();
+
+    if (!bookingId || !updates || Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: "Missing bookingId or updates" }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("bookings")
+      .update(updates)
+      .eq("id", bookingId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: Request) {
   try {
     const supabaseAdmin = getSupabaseAdminClient();

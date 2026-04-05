@@ -229,13 +229,11 @@ export default function AdminPage() {
 
   async function handleSaveSettings() {
     setSettingsSaving(true);
-    const keys = Object.keys(siteSettings);
-    for (const key of keys) {
-      await supabase.from("site_settings").upsert(
-        { key, value: siteSettings[key] },
-        { onConflict: "key" }
-      );
-    }
+    await fetch("/api/site-settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings: siteSettings }),
+    });
     setSettingsSaving(false);
   }
 
