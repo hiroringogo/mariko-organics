@@ -12,6 +12,28 @@ function getSupabaseAdminClient() {
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
+// POST: New membership application (public)
+export async function POST(request: Request) {
+  try {
+    const { name, email } = await request.json();
+    if (!name || !email) {
+      return NextResponse.json({ error: "Missing name or email" }, { status: 400 });
+    }
+
+    const { error } = await getSupabaseAdminClient()
+      .from("members")
+      .insert({ email: email.trim().toLowerCase(), name: name.trim() });
+
+    if (error) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
+}
+
 // GET: List all members (admin only)
 export async function GET() {
   const cookieStore = await cookies();

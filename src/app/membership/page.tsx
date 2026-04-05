@@ -51,12 +51,14 @@ export default function MembershipPage() {
     if (!name || !email) return;
     setSubmitting(true);
     setError("");
-    const { error: err } = await supabase.from("members").insert({
-      email: email.trim().toLowerCase(),
-      name: name.trim(),
+    const res = await fetch("/api/members", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), name: name.trim() }),
     });
-    if (err) {
-      if (err.code === "23505") {
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.code === "23505") {
         setError("このメールアドレスは既に登録済みです");
       } else {
         setError("エラーが発生しました。もう一度お試しください。");
