@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
 import Clock from "lucide-react/dist/esm/icons/clock";
@@ -62,7 +62,10 @@ export default function MyPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [memberToast, setMemberToast] = useState(false);
 
+  const fetchGenRef = useRef(0);
+
   const fetchBookings = useCallback(async (email: string) => {
+    const gen = ++fetchGenRef.current;
     const { data } = await supabase
       .from("bookings")
       .select("*, lesson:lessons(*)")
@@ -70,6 +73,7 @@ export default function MyPage() {
       .eq("status", "confirmed")
       .order("created_at", { ascending: false });
 
+    if (gen !== fetchGenRef.current) return; // 古いfetchは破棄
     if (data) setBookings(data);
     setLoading(false);
   }, []);
@@ -131,18 +135,22 @@ export default function MyPage() {
     const booking = bookings.find((b) => b.id === bookingId);
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "cancelled" })
-        .eq("id", bookingId);
+      const res = await fetch("/api/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      });
 
-      if (error) {
-        console.error("Cancel error:", error);
-        alert("キャンセルに失敗しました: " + error.message);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Cancel error:", data);
+        alert("キャンセルに失敗しました: " + (data.error ?? res.status));
         setCancelling(null);
         return;
       }
 
+      // 古いfetchが古いデータで上書きしないよう世代を進める
+      fetchGenRef.current++;
       // Immediately remove from UI
       setBookings((prev) => prev.filter((b) => b.id !== bookingId));
 
@@ -159,14 +167,6 @@ export default function MyPage() {
           }),
         }).catch(() => {});
       }
-
-      // Refresh data from server after a slight delay to ensure DB sync
-      setTimeout(async () => {
-        const emailToFetch = userEmail || booking?.email;
-        if (emailToFetch) {
-          await fetchBookings(emailToFetch);
-        }
-      }, 500);
 
       setSuccessMessage("レッスンをキャンセルしました");
       setTimeout(() => setSuccessMessage(""), 3000);

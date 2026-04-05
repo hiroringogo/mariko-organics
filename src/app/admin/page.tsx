@@ -451,7 +451,18 @@ export default function AdminPage() {
   }
 
   async function handleCancelBooking(booking: Booking, lessonDate: string) {
-    await supabase.from("bookings").update({ status: "cancelled" }).eq("id", booking.id);
+    const res = await fetch("/api/bookings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId: booking.id }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert("キャンセルに失敗しました: " + (data.error ?? res.status));
+      return;
+    }
+
     await fetch("/api/send-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
