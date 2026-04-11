@@ -183,23 +183,12 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
           className={inputClass}
         />
         <p className="text-[11px] text-muted-foreground">メインタイトルとして大きく表示されます</p>
-        <input
-          type="text"
-          value={workshopSubtitleEn}
-          onChange={(e) => setWorkshopSubtitleEn(e.target.value)}
-          placeholder="English title (e.g. Raw Rice Pão de Ló)"
-          className={inputClass + " mt-1"}
-        />
-        <p className="text-[11px] text-muted-foreground">🇺🇸 英語版タイトル（空欄なら日本語が表示されます）</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>説明文</label>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="レッスンの説明..."
           className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none w-full" />
-        <textarea value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} rows={3} placeholder="English description..."
-          className="rounded-xl bg-accent px-4 py-3 text-sm border border-input outline-none focus:border-primary transition-colors resize-none w-full mt-1" />
-        <p className="text-[11px] text-muted-foreground">🇺🇸 英語版説明文（空欄なら日本語が表示されます）</p>
       </div>
 
       {/* Image Upload */}
