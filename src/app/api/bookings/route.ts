@@ -127,10 +127,20 @@ export async function PUT(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const supabaseAdmin = getSupabaseAdminClient();
-    const { bookingId } = await request.json();
+    const { bookingId, email } = await request.json();
 
-    if (!bookingId) {
-      return NextResponse.json({ error: "Missing bookingId" }, { status: 400 });
+    if (!bookingId || !email) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    }
+
+    const { data: booking } = await supabaseAdmin
+      .from("bookings")
+      .select("email")
+      .eq("id", bookingId)
+      .single();
+
+    if (!booking || booking.email !== email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const { error } = await supabaseAdmin
