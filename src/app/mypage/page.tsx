@@ -139,7 +139,7 @@ export default function MyPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookingId, email: userEmail }),
-
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         console.error("Cancel error:", data);
