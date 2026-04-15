@@ -138,8 +138,7 @@ export default function MyPage() {
       const res = await fetch("/api/bookings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookingId }),
-      });
+        body: JSON.stringify({ bookingId, email: userEmail }),
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
