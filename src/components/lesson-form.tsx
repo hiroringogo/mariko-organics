@@ -202,7 +202,7 @@ export function LessonForm({ initial, onSubmit, onSubmitMultiple, onCancel, subm
           className="hidden"
         />
         {imagePreview ? (
-          <div className="relative rounded-xl overflow-hidden h-[140px]">
+          <div className="relative rounded-xl overflow-hidden h-[220px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imagePreview} alt="プレビュー" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
