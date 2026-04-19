@@ -49,6 +49,7 @@ export default function MyPage() {
   const [loading, setLoading] = useState(true);
   const [lookupDone, setLookupDone] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<Booking | null>(null);
   const [isMember, setIsMember] = useState(false);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editLessonId, setEditLessonId] = useState("");
@@ -468,7 +469,7 @@ export default function MyPage() {
                       {t.edit[lang]}
                     </button>
                     <button
-                      onClick={() => handleCancel(booking.id)}
+                      onClick={() => setCancelTarget(booking)}
                       disabled={cancelling === booking.id}
                       className="flex-1 h-9 rounded-full border border-destructive text-destructive text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
                     >
@@ -745,6 +746,25 @@ export default function MyPage() {
       )}
 
       {/* Success Toast */}
+      {cancelTarget && (
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
+    <div className="bg-background w-full max-w-[380px] rounded-[24px] p-6 flex flex-col gap-4">
+      <h3 className="text-lg font-semibold">予約をキャンセルしますか？</h3>
+      <p className="text-sm text-muted-foreground">
+        {cancelTarget.participant_count}名分の予約がキャンセルされます。
+        {cancelTarget.companion_names && cancelTarget.companion_names.length > 0 && (
+          <span className="block mt-1">同伴者: {cancelTarget.companion_names.join("、")}</span>
+        )}
+      </p>
+      <div className="flex gap-3">
+        <button
+          onClick={() => setCancelTarget(null)}
+          className="flex-1 h-11 rounded-full border border-border text-sm font-medium"
+        >
+          戻る
+        </button>
+        <button
+          onClick={() => { handleCancel(cancelTarget.id); setCancelT
       {successMessage && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] max-w-[380px] w-[calc(100%-32px)] animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-3 bg-card border border-primary/20 rounded-2xl p-4 shadow-lg">
