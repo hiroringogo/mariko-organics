@@ -53,7 +53,7 @@ export default function MyPage() {
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [editLessonId, setEditLessonId] = useState("");
   const [editParticipantCount, setEditParticipantCount] = useState(1);
-  const [availableLessons, setAvailableLessons] = useState<{ id: string; date: string; start_time: string; end_time: string; seats_remaining: number; workshop_subtitle: string; workshop_subtitle_en?: string }[]>([]);
+  const [availableLessons, setAvailableLessons] = useState<{ id: string; date: string; start_time: string; end_time: string; seats_remaining: number; workshop_subtitle: string; workshop_subtitle_en?: string; price: number}[]>([]);
   const [saving, setSaving] = useState(false);
   const [companionSelected, setCompanionSelected] = useState<boolean[]>([]);
   const [editCompanionNames, setEditCompanionNames] = useState<string[]>([]);
@@ -261,7 +261,21 @@ export default function MyPage() {
           companionNames: newNames,
         }),
       }).catch(() => {});
-      
+        fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "lesson_booking",
+            email: userEmail,
+            name: editingBooking.name,
+            lessonTitle: selectedLesson?.workshop_subtitle || "",
+            lessonDate: selectedLesson ? formatDateFull(selectedLesson.date, "ja") : "",
+            lessonTime: selectedLesson ? `${selectedLesson.start_time.slice(0, 5)} - ${selectedLesson.end_time.slice(0, 5)}` : "",
+            participantCount: newParticipantCount,
+            companionNames: newNames,
+            lessonPrice: selectedLesson?.price || 50,
+          }),
+  }).catch(() => {});
       await fetchBookings(userEmail);
       setEditingBooking(null);
       setSuccessMessage(lang === "ja"
