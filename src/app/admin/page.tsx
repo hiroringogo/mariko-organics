@@ -785,7 +785,6 @@ export default function AdminPage() {
                           )}
                           {confirmDelete === lesson.id ? (
                            <div className="flex flex-col gap-2">
-                            <span className="text-xs text-destructive">予約中の生徒さんにはキャンセルメールが届きます</span>
                             <div className="flex items-center gap-2">
                               <button onClick={() => handleDelete(lesson.id)}
                                 className="text-sm font-medium text-primary-foreground bg-destructive rounded-full px-3 py-1.5">
@@ -793,6 +792,7 @@ export default function AdminPage() {
                               </button>
                               <button onClick={() => setConfirmDelete(null)} className="text-sm text-muted-foreground">やめる</button>
                             </div>
+                            <span className="text-xs text-destructive">本当に削除を押すと、予約中の生徒さんにキャンセルメールが届きます</span>
                           </div> 
                           ) : (
                             <button onClick={() => setConfirmDelete(lesson.id)}
