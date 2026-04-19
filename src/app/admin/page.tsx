@@ -792,7 +792,7 @@ export default function AdminPage() {
                               </button>
                               <button onClick={() => setConfirmDelete(null)} className="text-sm text-muted-foreground">やめる</button>
                             </div>
-                            <span className="text-xs text-destructive">本当に削除を押すと、予約中の生徒さんにキャンセルメールが届きます</span>
+                            <span className="text-xs text-destructive">本当に削除を押すと、本当に削除を押すと、予約中の生徒さんの予約もキャンセルされます</span>
                           </div> 
                           ) : (
                             <button onClick={() => setConfirmDelete(lesson.id)}
