@@ -452,7 +452,7 @@ export default function AdminPage() {
     const res = await fetch("/api/bookings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId: booking.id }),
+      body: JSON.stringify({ bookingId: booking.id, email: booking.email }),
     });
 
     if (!res.ok) {
