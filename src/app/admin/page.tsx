@@ -429,24 +429,39 @@ export default function AdminPage() {
   }
 
   async function handleDelete(lessonId: string) {
-    try {
-      const res = await fetch("/api/lessons", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lessonId }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        alert("削除に失敗しました: " + err.error);
-        return;
+  try {
+    const lesson = allLessons.find((l) => l.id === lessonId);
+    if (lesson && lesson.bookings.length > 0) {
+      for (const booking of lesson.bookings) {
+        await fetch("/api/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "booking_cancelled",
+            name: booking.name,
+            email: booking.email,
+            lessonDate: formatDate(lesson.date),
+          }),
+        }).catch(() => {});
       }
-      setConfirmDelete(null);
-      setExpandedLesson(null);
-      await fetchData();
-    } catch (err) {
-      alert("削除に失敗しました: " + String(err));
     }
+    const res = await fetch("/api/lessons", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lessonId }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert("削除に失敗しました: " + err.error);
+      return;
+    }
+    setConfirmDelete(null);
+    setExpandedLesson(null);
+    await fetchData();
+  } catch (err) {
+    alert("削除に失敗しました: " + String(err));
   }
+}
 
   async function handleCancelBooking(booking: Booking, lessonDate: string) {
     const res = await fetch("/api/bookings", {
