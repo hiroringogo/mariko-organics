@@ -191,7 +191,7 @@ export default function MyPage() {
     // Fetch available lessons for the same workshop
     const { data } = await supabase
       .from("lesson_with_seats")
-      .select("id, date, start_time, end_time, seats_remaining, workshop_subtitle")
+      .select("id, date, start_time, end_time, seats_remaining, workshop_subtitle, workshop_subtitle_en, price")
       .gte("date", new Date().toISOString().split("T")[0])
       .or("is_published.eq.true,is_member_published.eq.true")
       .order("date", { ascending: true });
@@ -261,7 +261,7 @@ export default function MyPage() {
           companionNames: newNames,
         }),
       }).catch(() => {});
-
+      
       await fetchBookings(userEmail);
       setEditingBooking(null);
       setSuccessMessage(lang === "ja"
