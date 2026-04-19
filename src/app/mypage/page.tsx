@@ -764,7 +764,17 @@ export default function MyPage() {
           戻る
         </button>
         <button
-          onClick={() => { handleCancel(cancelTarget.id); setCancelT
+          onClick={() => { handleCancel(cancelTarget.id); setCancelTarget(null); }}
+          disabled={cancelling === cancelTarget.id}
+          className="flex-1 h-11 rounded-full bg-destructive text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {cancelling === cancelTarget.id && <Loader2 size={14} className="animate-spin" />}
+          キャンセルする
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {successMessage && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] max-w-[380px] w-[calc(100%-32px)] animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center gap-3 bg-card border border-primary/20 rounded-2xl p-4 shadow-lg">
