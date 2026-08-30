@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         .select("value")
         .eq("key", "admin_email")
         .single();
-      const adminEmail = settingsData?.value || process.env.ADMIN_EMAIL || "mariko.organics@authenticknt.com";
+      const adminEmail = settingsData?.value || process.env.ADMIN_EMAIL || "admin@example.com";
       await resend.emails.send({
         from: "Mariko Organics <noreply@send.authenticknt.com>",
         to: adminEmail,
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         .select("value")
         .eq("key", "admin_email")
         .single();
-      const adminEmail = settingsData?.value || process.env.ADMIN_EMAIL || "mariko.organics@authenticknt.com";
+      const adminEmail = settingsData?.value || process.env.ADMIN_EMAIL || "admin@example.com";
       if (!adminEmail) {
         return NextResponse.json({ error: "Admin email not configured" }, { status: 500 });
       }
